@@ -80,54 +80,51 @@ def detected_walls(lum, valid, thr=4.0):
     return walls
 
 
-def lattice_walls(lum, valid, lattice, tol=14, thr=6.0):
-    """Walls on the sheet lattice, SNAPPED locally: sheets are pasted with
-    small offsets, so within each cell band the wall moves to the strongest
-    tone step found within ±tol px of the nominal line (else stays on it).
-    A short connector closes the step between neighbouring bands."""
-    H, W = lum.shape
+def lattice_walls(rgb, valid, lattice, thr=6.0):
+    """Walls on the sheet lattice PLUS every strong straight edge inside each
+    cell band. Sheets are pasted with offsets of up to a third of a cell and
+    some differ only in hue (pink vs cream paper), so edges are found on the
+    per-channel colour step, per band, anywhere in the band — the lattice
+    line itself is always a wall too (splitting one sheet into two regions
+    with near-identical parameters is harmless)."""
+    H, W = rgb.shape[1:]
     px, phx, py, phy = [v / SCALE for v in lattice]
     xs = sorted({int(round(x)) for x in np.arange(phx, W, px) if 0 < round(x) < W})
     ys = sorted({int(round(y)) for y in np.arange(phy, H, py) if 0 < round(y) < H})
     xe = [0] + xs + [W]
     ye = [0] + ys + [H]
     walls = np.zeros((H, W), bool)
+    walls[ys, :] = True
+    walls[:, xs] = True
     vv = valid.astype(np.float32)
-    dr = np.abs(np.diff(lum, axis=0)) * (vv[:-1] * vv[1:])      # step r→r+1
-    dc = np.abs(np.diff(lum, axis=1)) * (vv[:, :-1] * vv[:, 1:])  # step c→c+1
+    dr = np.abs(np.diff(rgb, axis=1)).mean(axis=0) * (vv[:-1] * vv[1:])      # (H-1, W)
+    dc = np.abs(np.diff(rgb, axis=2)).mean(axis=0) * (vv[:, :-1] * vv[:, 1:])  # (H, W-1)
     cr = vv[:-1] * vv[1:]
     cc = vv[:, :-1] * vv[:, 1:]
 
-    for y0 in ys:                                   # horizontal walls
-        r0, r1 = max(0, y0 - tol), min(H - 1, y0 + tol)
-        prof = np.add.reduceat(dr[r0:r1], xe[:-1], axis=1)
-        cnt = np.add.reduceat(cr[r0:r1], xe[:-1], axis=1)
-        prof = np.where(cnt > 0, prof / np.maximum(cnt, 1), 0)
-        best, val = prof.argmax(axis=0), prof.max(axis=0)
-        # a real sheet edge stands well above the band's own texture;
-        # otherwise (uniform sheet, plain noise) the wall stays on the lattice
-        snap = (val > thr) & (val > 2.5 * np.median(prof, axis=0))
-        prev = None
-        for j in range(len(xe) - 1):
-            y = r0 + int(best[j]) + 1 if snap[j] else y0
-            walls[y, xe[j]:xe[j + 1]] = True
-            if prev is not None and prev != y:
-                walls[min(prev, y):max(prev, y) + 1, xe[j]] = True
-            prev = y
-    for x0 in xs:                                   # vertical walls
-        c0, c1 = max(0, x0 - tol), min(W - 1, x0 + tol)
-        prof = np.add.reduceat(dc[:, c0:c1], ye[:-1], axis=0)
-        cnt = np.add.reduceat(cc[:, c0:c1], ye[:-1], axis=0)
-        prof = np.where(cnt > 0, prof / np.maximum(cnt, 1), 0)
-        best, val = prof.argmax(axis=1), prof.max(axis=1)
-        snap = (val > thr) & (val > 2.5 * np.median(prof, axis=1))
-        prev = None
-        for i in range(len(ye) - 1):
-            x = c0 + int(best[i]) + 1 if snap[i] else x0
-            walls[ye[i]:ye[i + 1], x] = True
-            if prev is not None and prev != x:
-                walls[ye[i], min(prev, x):max(prev, x) + 1] = True
-            prev = x
+    def strong(prof):
+        """Local maxima that stand out from the band's texture."""
+        base = np.median(prof[prof > 0]) if (prof > 0).any() else 0.0
+        ok = (prof > base + thr) & (prof > 2.5 * base)
+        out = []
+        for i in np.where(ok)[0]:
+            lo, hi = max(0, i - 3), i + 4
+            if prof[i] >= prof[lo:hi].max():
+                out.append(int(i))
+        return out
+
+    for j in range(len(xe) - 1):                    # horizontal edges per column band
+        band = dr[:, xe[j]:xe[j + 1]]
+        cnt = cr[:, xe[j]:xe[j + 1]].sum(axis=1)
+        prof = np.where(cnt > 0.3 * band.shape[1], band.sum(axis=1) / np.maximum(cnt, 1), 0)
+        for r in strong(prof):
+            walls[r + 1, xe[j]:xe[j + 1]] = True
+    for i in range(len(ye) - 1):                    # vertical edges per row band
+        band = dc[ye[i]:ye[i + 1], :]
+        cnt = cc[ye[i]:ye[i + 1], :].sum(axis=0)
+        prof = np.where(cnt > 0.3 * band.shape[0], band.sum(axis=0) / np.maximum(cnt, 1), 0)
+        for c in strong(prof):
+            walls[ye[i]:ye[i + 1], c + 1] = True
     return walls
 
 
@@ -168,8 +165,12 @@ def region_params(rgb, valid, labels, nlab, dark="inherit", lo_p=3, hi_p=90,
         # would also put its ink on target is bounded, and a sheet with too
         # little dynamic range (blank paper, muddy scan) gets an offset only —
         # stretching it would just amplify stains and noise.
-        if span.mean() < 50 or paper.mean() < 90:
-            g = np.ones(3, np.float32)
+        if span.mean() < 50 and paper.mean() >= 145:
+            g = np.ones(3, np.float32)                       # blank sheet: offset only
+        elif span.mean() < 50 or paper.mean() < 90:
+            # muddy dark scan (dark paper and/or little range): it needs
+            # contrast, not just lifting — bounded so noise stays tame
+            g = np.clip((t_paper - t_ink) / np.maximum(span, 8.0), 1.0, 2.2)
         else:
             g = np.clip((t_paper - t_ink) / np.maximum(span, 8.0), 0.6, 1.8)
         A[lab] = g
@@ -242,7 +243,7 @@ def uniformize(src_path, dst_path, nodata, lattice, feather, dark):
         rgb8 = src.read([1, 2, 3], out_shape=(3, h8, w8)).astype(np.float32)
         valid8 = valid_mask(rgb8, nodata)
         lum8 = rgb8.mean(axis=0)
-        walls = lattice_walls(lum8, valid8, lattice) if lattice else \
+        walls = lattice_walls(rgb8, valid8, lattice) if lattice else \
             detected_walls(lum8, valid8)
         Amap, Bmap, labels = build_param_maps(rgb8, valid8, walls, feather, dark)
 

@@ -34,10 +34,6 @@ body{background:var(--ground);color:var(--ink);font:15px/1.55 var(--ui);overflow
 #map canvas{cursor:default}
 a{color:var(--pink)}
 button{font-family:inherit}
-.maplibregl-ctrl-bottom-right{z-index:20}
-.maplibregl-ctrl-attrib{background:rgba(19,12,22,.7)!important;color:var(--faint);font:11px var(--ui)}
-.maplibregl-ctrl-attrib a{color:var(--muted)}
-.maplibregl-ctrl-attrib-button{filter:invert(1)}
 
 /* ---------- brand / chrome ---------- */
 #brandwrap{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;z-index:30}
@@ -548,7 +544,8 @@ var map = new maplibregl.Map({
   }
 });
 if(typeof map.setVerticalFieldOfView === "function") map.setVerticalFieldOfView(FOV_DEFAULT);
-map.addControl(new maplibregl.AttributionControl({compact:true}), "bottom-right");
+/* no attribution control on the map: every source is credited in the
+   "sobre" card (same choice as ilhasdepedra) */
 map.touchPitch.enable();
 map.getCanvasContainer().addEventListener("contextmenu", function(e){ e.preventDefault(); });
 
