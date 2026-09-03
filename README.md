@@ -16,11 +16,11 @@ map layers. Sibling of `../ilhasdepedra`; live at `ecotono.xyz/anomalias`.
 ## Layout
 
 ```
-site/            the deployable static page (index.html + data/ + media/ + slides/ + tiles/)
+site/            the deployable static page (index.html + data/ + media/ + tiles/)
 scripts/         build_data.py (site/data + site/media) · build_tiles.py (historical map tiles)
 images/raw/      the field photos (EXIF GPS + heading are the source of truth)
 maps/            georeferenced historical maps (GeoTIFF, not in git — 1.3 GB)
-assets/          presentation (pptx), its transcript and abstract
+assets/          the talk's slides (pptx), transcript and abstract — source material only
 geodata/         raw Overpass / FlatGeobuf downloads cached by build_data.py (not in git)
 ```
 
@@ -69,13 +69,9 @@ geodata/         raw Overpass / FlatGeobuf downloads cached by build_data.py (no
   option, and a fly that starts before the destination's terrain tile has
   loaded would otherwise pin the camera centre at sea level (markers on a
   hillside then project off-screen). Keep it if you touch `fly()`.
-- **Apresentação** — `site/slides/s01..s12.jpg` + `site/apresentacao.pdf`,
-  rendered from `assets/PPT Anomalias.pptx` (LibreOffice → PDF → `pdftoppm
-  -r 110`; `gs -dPDFSETTINGS=/ebook` for the PDF). If the slide count
-  changes, update `SN` in `site/index.html`.
 
 Share links: `…/anomalias/#a/braco` opens an anomaly, `#m/<photo id>` a
-photo, `#slides` the presentation.
+photo.
 
 ## Updating content
 
@@ -114,13 +110,17 @@ nodata gaps; each region's
 paper (p90) is anchored exactly onto the mosaic-wide median paper, with a
 bounded contrast gain that also pulls its ink (p3) towards the median ink
 (an offset only for blank sheets; muddy dark scans instead get a bounded
-contrast boost, since lifting alone left them illegible). Regions with no
-bright paper at all get their own correction on SARA (`dark: "offset"`,
-they are real sheet cells) and inherit the surrounding sheet's correction
-on the IGC (`dark: "inherit"`, they are hatched sub-areas or legend strips).
+contrast boost, since lifting alone left them illegible). The three
+channel gains are bounded by one common factor so the ink keeps its hue,
+and regions smaller than a sheet-scale area (urban texture splits) only get
+mild gains, their percentiles being noisy. Regions with no bright paper at
+all get their own correction on SARA (`dark: "offset"`, they are real sheet
+cells) and inherit the surrounding sheet's correction on the IGC
+(`dark: "inherit"`, they are hatched sub-areas or legend strips).
 Parameters are feathered over a few pixels at region edges, and a final
-highlight-clip pass scales down any patch whose local paper (1 km window,
-90th percentile) is still brighter than the target — pieces pasted with a
+highlight-clip pass scales down (in luminance only, so hue is untouched)
+any patch whose local paper (1 km window, 90th percentile) is still
+brighter than the target — pieces pasted with a
 diagonal edge, for instance — leaving darker areas untouched. Output is
 git-ignored but must be deployed with the rest of `site/`.
 

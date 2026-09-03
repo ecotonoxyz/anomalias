@@ -105,7 +105,10 @@ def lattice_walls(rgb, valid, lattice, thr=6.0):
     def strong(prof):
         """Local maxima that stand out from the band's texture."""
         base = np.median(prof[prof > 0]) if (prof > 0).any() else 0.0
-        ok = (prof > base + thr) & (prof > 2.5 * base)
+        # in busy urban bands the texture baseline is high and a pink/cream
+        # sheet edge is only ~15 levels: ask for a margin over the baseline,
+        # not a multiple of it
+        ok = (prof > base + thr) & (prof > 1.5 * base)
         out = []
         for i in np.where(ok)[0]:
             lo, hi = max(0, i - 3), i + 4
@@ -129,7 +132,7 @@ def lattice_walls(rgb, valid, lattice, thr=6.0):
 
 
 def region_params(rgb, valid, labels, nlab, dark="inherit", lo_p=3, hi_p=90,
-                  min_px=40):
+                  min_px=150):
     """Per-region linear map (A, B) per channel: ink→target ink, paper→target
     paper. Regions with too few pixels get no params (NaN) and later inherit
     the nearest region's."""
@@ -158,21 +161,29 @@ def region_params(rgb, valid, labels, nlab, dark="inherit", lo_p=3, hi_p=90,
     bright = [i for i, pp in enumerate(papers) if pp.mean() >= 90]
     t_ink = np.median(np.array(inks)[bright], axis=0)
     t_paper = np.median(np.array(papers)[bright], axis=0)
+    def fit(g, lo, hi):
+        """Bound the per-channel gains with ONE common factor: clipping each
+        channel on its own flattened the ink's hue (the channel with the
+        widest span was compressed relative to the others)."""
+        g = g * min(1.0, hi / g.max()) if g.max() > hi else g
+        g = g * max(1.0, lo / g.min()) if g.min() < lo else g
+        return np.clip(g, lo * 0.9, hi * 1.1)
+
     for lab, (ink, paper, n) in stats.items():
         span = paper - ink
+        g2 = (t_paper - t_ink) / np.maximum(span, 8.0)     # hue-preserving two-point gains
+        big = n >= 1000                                    # a real sheet-scale region
         # paper-anchored map: the sheet's paper lands EXACTLY on the target
         # (that is what makes the mosaic uniform); the contrast gain that
-        # would also put its ink on target is bounded, and a sheet with too
-        # little dynamic range (blank paper, muddy scan) gets an offset only —
-        # stretching it would just amplify stains and noise.
+        # would also put its ink on target is bounded. Small regions (urban
+        # texture splits) get only mild gains — their percentiles are noisy.
         if span.mean() < 50 and paper.mean() >= 145:
             g = np.ones(3, np.float32)                       # blank sheet: offset only
         elif span.mean() < 50 or paper.mean() < 90:
-            # muddy dark scan (dark paper and/or little range): it needs
-            # contrast, not just lifting — bounded so noise stays tame
-            g = np.clip((t_paper - t_ink) / np.maximum(span, 8.0), 1.0, 2.2)
+            # muddy dark scan: it needs contrast, not just lifting
+            g = fit(g2, 1.0, 2.2) if big else np.ones(3, np.float32)
         else:
-            g = np.clip((t_paper - t_ink) / np.maximum(span, 8.0), 0.6, 1.8)
+            g = fit(g2, 0.6, 1.8) if big else fit(g2, 0.8, 1.3)
         A[lab] = g
         B[lab] = t_paper - g * paper
     print(f"    {len(stats)} regions with stats; target ink {t_ink.round(1)} "
@@ -206,14 +217,15 @@ def build_param_maps(rgb, valid, walls, feather, dark):
     corr = np.empty_like(Amap)
     for c in range(3):
         corr[..., c] = np.where(valid, Amap[..., c] * rgb[c] + Bmap[..., c], t_paper[c])
-    S = np.ones_like(Amap)
-    for c in range(3):
-        local = ndimage.percentile_filter(corr[..., c], 90, size=HILITE_WIN)
-        S[..., c] = np.clip(t_paper[c] / np.maximum(local, 1.0), 0.5, 1.0)
-        S[..., c] = ndimage.uniform_filter(S[..., c], 3)
-    Amap *= S
-    Bmap *= S
-    print(f"    highlight clip: {(S < 0.98).any(axis=2).mean()*100:.1f}% of pixels")
+    # one scalar per pixel from LUMINANCE: scaling channels separately
+    # shifted the hue wherever the overshoot differed between channels
+    lum = corr.mean(axis=2)
+    local = ndimage.percentile_filter(lum, 90, size=HILITE_WIN)
+    S = np.clip(t_paper.mean() / np.maximum(local, 1.0), 0.5, 1.0)
+    S = ndimage.uniform_filter(S, 3)
+    Amap *= S[..., None]
+    Bmap *= S[..., None]
+    print(f"    highlight clip: {(S < 0.98).mean()*100:.1f}% of pixels")
     return Amap, Bmap, labels
 
 
