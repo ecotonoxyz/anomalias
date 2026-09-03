@@ -289,8 +289,8 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
   </div>
   <div class="fovrow" title="ângulo de visão da câmera">
     <label for="fov">lente</label>
-    <input type="range" id="fov" min="10" max="60" step="1" value="37" aria-label="ângulo de visão">
-    <b id="fovv">37°</b>
+    <input type="range" id="fov" min="10" max="60" step="1" value="15" aria-label="ângulo de visão">
+    <b id="fovv">15°</b>
   </div>
 </div>
 
@@ -384,6 +384,7 @@ var TERRAIN = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{
 var HOME = {center:[-46.60,-23.63], zoom:9.7, pitch:0, bearing:0};
 var CITY = {center:[-46.64,-23.62], zoom:10.5, pitch:42, bearing:-8};
 var RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var FOV_DEFAULT = 15;   // narrow "lente": a telephoto look that flattens the metropolis
 
 var map = new maplibregl.Map({
   container:"map",
@@ -556,6 +557,7 @@ var map = new maplibregl.Map({
     ]
   }
 });
+if(typeof map.setVerticalFieldOfView === "function") map.setVerticalFieldOfView(FOV_DEFAULT);
 map.addControl(new maplibregl.AttributionControl({compact:true}), "bottom-right");
 map.touchPitch.enable();
 map.getCanvasContainer().addEventListener("contextmenu", function(e){ e.preventDefault(); });
