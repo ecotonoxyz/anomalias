@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Bake XYZ WebP tiles for the historical maps in maps/ (not in git).
 
+Run scripts/uniformize_sheets.py first: it writes the sheet-uniformised
+maps/<name>-uniform.tif that are tiled here.
+
     python3 scripts/build_tiles.py            # both maps
     python3 scripts/build_tiles.py sara1930   # one of: igc, sara1930
 
@@ -22,18 +25,18 @@ ROOT = Path(__file__).resolve().parent.parent
 MAPS = ROOT / "maps"
 OUT = ROOT / "site" / "tiles"
 
-# name → source, zoom range, extra gdalwarp args.
-#   igc:      ~14.8 m/px scan (UTM 23S, nodata 0)  → native ≈ z13, z14 crisp
-#   sara1930: ~1.8 m/px mosaic (WGS84). Its alpha band is 255 everywhere and
-#             the gaps between sheets are pure white, so white is keyed out
-#             (UNIFIED: only pixels white in all three bands) → native ≈ z16
+# name → source, zoom range, extra gdalwarp args. Sources are the
+# sheet-uniformised mosaics written by scripts/uniformize_sheets.py.
+#   igc:      ~14.8 m/px scan, EPSG:4326 after uniformising, nodata 0
+#             → native ≈ z13, z14 crisp
+#   sara1930: ~1.8 m/px mosaic (WGS84); the gaps between sheets are pure
+#             white, keyed out (UNIFIED: only pixels white in all three
+#             bands) → native ≈ z16
 SETS = {
-    "igc": {"src": "folhas-rmsp.tif", "zooms": "7-14",
-            "warp": ["-b", "1", "-b", "2", "-b", "3", "-srcnodata", "0",
-                     "-dstalpha"]},
-    "sara1930": {"src": "sara1930.tif", "zooms": "10-16",
-                 "warp": ["-b", "1", "-b", "2", "-b", "3",
-                          "-srcnodata", "255 255 255",
+    "igc": {"src": "igc-uniform.tif", "zooms": "7-14",
+            "warp": ["-srcnodata", "0", "-dstalpha"]},
+    "sara1930": {"src": "sara1930-uniform.tif", "zooms": "10-16",
+                 "warp": ["-srcnodata", "255 255 255",
                           "-wo", "UNIFIED_SRC_NODATA=YES", "-dstalpha"]},
 }
 
@@ -47,7 +50,8 @@ def build(name):
     cfg = SETS[name]
     src = MAPS / cfg["src"]
     if not src.exists():
-        sys.exit(f"missing {src} — the source rasters are not in git")
+        sys.exit(f"missing {src} — run scripts/uniformize_sheets.py first "
+                 "(the source rasters are not in git)")
     dst = OUT / name
     with tempfile.TemporaryDirectory() as td:
         warped = Path(td) / f"{name}-3857.tif"

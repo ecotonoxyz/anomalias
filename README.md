@@ -98,13 +98,19 @@ FlatGeobufs for hidro/water) and caches into `geodata/`.
 ### Historical map tiles
 
 ```
+python3 scripts/uniformize_sheets.py      # maps/*-uniform.tif; ~5 min
 python3 scripts/build_tiles.py            # both; ~1 min, ~200 MB in site/tiles/
 python3 scripts/build_tiles.py sara1930   # one of: igc, sara1930
 ```
 
-Needs the GeoTIFFs in `maps/` (`folhas-rmsp.tif`, `sara1930.tif`) and GDAL
-with the WEBP driver. Output is git-ignored but must be deployed with the
-rest of `site/`.
+Needs the GeoTIFFs in `maps/` (`folhas-rmsp.tif`, `sara1930.tif`), GDAL
+with the WEBP driver, rasterio, SciPy. `uniformize_sheets.py` evens out the
+per-sheet colour and brightness of the scans: SARA is cut along its
+500 m sheet lattice (pitch/phase measured on the source, in `SETS`), the
+IGC patchwork is segmented by tone steps and nodata gaps; each region's
+paper (p90) and ink (p3) are mapped linearly onto the mosaic-wide medians,
+with the parameters feathered over a few pixels at region edges. Output is
+git-ignored but must be deployed with the rest of `site/`.
 
 ## Preview and deploy
 
@@ -121,6 +127,8 @@ at `ecotono.xyz/anomalias`. Deploy is the same rsync as ilhasdepedra
 gcloud storage rsync --recursive site gs://ecotono-data/site/anomalias
 ```
 
-Content is live on the next request. **Caveat:** `gcs-push.sh --mirror` in
+New files are live on the next request; an *overwritten* file (say
+`index.html`) can take from one to twenty minutes to show, while the
+server's bucket mount refreshes its cache. **Caveat:** `gcs-push.sh --mirror` in
 the www.ecotono.xyz repo mirrors *its* `site/` over the bucket and would
 delete `site/anomalias` — re-run the rsync above after any `--mirror` push.
