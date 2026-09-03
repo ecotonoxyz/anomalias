@@ -26,24 +26,21 @@ geodata/         raw Overpass / FlatGeobuf downloads cached by build_data.py (no
 
 ## The page
 
-- **Basemaps** — *relevo*: the Câmera Topográfica relief served live by
-  `cameratopo.pedalhidrografi.co`, two layers with the same palette
-  (`elevMin=720 elevMax=830`, one cycle): the ~5 m São Paulo DEM (`dem=sp`,
-  transparent outside its footprint, which stops just north of the Colônia
-  crater) over FABDEM 30 m (`dem=fabdem`). *satélite*: Esri World Imagery.
-  *osm*: OpenStreetMap standard tiles. Relief tiles are render-on-demand and
-  CDN-cached; a cold tile takes ~1–5 s and a burst of cold requests can
-  come back as CDN error pages, so the sources are capped at their native
-  zoom (13 / 15) and `python3 scripts/warm_relief.py` pre-warms the cache
-  (window z9–13 + z14–15 around the anomalies) — run it after changing
-  `RELIEF` in `site/index.html` or before showing the site.
-- **Historical overlays** — `site/tiles/igc/` (IGC-SP sheets, 1895–1920,
+- **One map at a time** — a single selector: *relevo*, *satélite*, *osm*,
+  *1895–1920*, *1930*. Whatever the chosen map doesn't cover shows a neutral
+  grey ground (the `bg` layer). *relevo*: the Pedal Hidrográfico
+  **Topografia colorida** (amora.pedalhidrografi.co), prebaked tiles
+  `telhas.pedalhidrografi.co/rmsampa-v2/{z}/{x}/{y}.png`, z8–16, covering
+  roughly lon −47.46…−45.70 / lat −24.21…−22.92 — the same Grande São Paulo
+  topo-hydrographic map as in the presentation. *satélite*: Esri World
+  Imagery. *osm*: OpenStreetMap standard tiles.
+- **Historical maps** — `site/tiles/igc/` (IGC-SP sheets, 1895–1920,
   z7–14) and `site/tiles/sara1930/` (SARA Brasil 1930, z10–16), WebP XYZ
   tiles baked from `maps/` by `scripts/build_tiles.py` — the SARA mosaic's
   white no-data (its alpha band is opaque everywhere) is keyed out to
-  transparent, and fully empty tiles are not written. Toggled with the
-  *1895–1920* / *1930* buttons, with an opacity slider; on top of them the
-  modern named rivers stay drawn in blue for comparison.
+  transparent, and fully empty tiles are not written. They are maps in
+  their own right in the selector (not overlays): where a sheet ends, the
+  grey ground shows. The Morros e Águas lines stay on top, slightly dimmed.
 - **Anomalias** — `site/data/anomalias.json`, hand-edited: id, number, name,
   short label, kind (`antiga` = Ab'Sáber 1957, `nova`), position, the fly-to
   zoom and the narrative text. Rendered as numbered markers with a label, a

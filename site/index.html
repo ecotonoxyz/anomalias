@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://www.ecotono.xyz/anomalias/">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="preconnect" href="https://cameratopo.pedalhidrografi.co">
+<link rel="preconnect" href="https://telhas.pedalhidrografi.co">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
@@ -30,7 +30,7 @@
 html,body{height:100%;margin:0}
 body{background:var(--ground);color:var(--ink);font:15px/1.55 var(--ui);overflow:hidden;
   -webkit-font-smoothing:antialiased}
-#map{position:absolute;inset:0;background:var(--ground)}
+#map{position:absolute;inset:0;background:#3b3b40}
 #map canvas{cursor:default}
 a{color:var(--pink)}
 button{font-family:inherit}
@@ -75,13 +75,9 @@ body.intro-open #index{display:none}
 #basemaps button{border:0;background:none;color:var(--muted);font:600 12.5px var(--display);
   padding:7px 13px;border-radius:99px;cursor:pointer;letter-spacing:.02em;white-space:nowrap}
 #basemaps button[aria-pressed="true"]{background:#fff;color:#14101a}
-#basemaps button[data-h][aria-pressed="true"]{background:var(--sepia);color:#2a1d10}
+#basemaps button[data-hist][aria-pressed="true"]{background:var(--sepia);color:#2a1d10}
 #basemaps .sep{width:1px;align-self:stretch;margin:4px 2px;background:var(--line)}
 #mediatoggle[aria-pressed="true"]{background:var(--pink)!important;color:#fff!important}
-#histop{display:none;align-items:center;gap:6px;padding:0 8px 0 4px}
-#histop.on{display:flex}
-#histop label{font:600 9.5px var(--display);letter-spacing:.06em;color:var(--muted)}
-#histop input{width:72px;accent-color:var(--sepia)}
 
 #camctl{position:absolute;right:12px;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 34px);
   z-index:30;display:flex;flex-direction:column;align-items:center;gap:5px;
@@ -265,14 +261,12 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
 
 <nav id="index" aria-label="anomalias"></nav>
 
-<div id="basemaps" role="group" aria-label="mapa base">
-  <button data-b="relevo" aria-pressed="true" title="relevo da Câmera Topográfica">relevo</button>
-  <button data-b="sat" aria-pressed="false">satélite</button>
-  <button data-b="osm" aria-pressed="false" title="OpenStreetMap">osm</button>
-  <i class="sep" aria-hidden="true"></i>
-  <button data-h="igc" aria-pressed="false" title="folhas topográficas IGC-SP, 1895–1920">1895–1920</button>
-  <button data-h="sara" aria-pressed="false" title="mapeamento SARA Brasil, 1930">1930</button>
-  <span id="histop"><label for="hop">opac.</label><input type="range" id="hop" min="20" max="100" step="5" value="90" aria-label="opacidade do mapa histórico"></span>
+<div id="basemaps" role="radiogroup" aria-label="mapa">
+  <button data-b="relevo" role="radio" aria-pressed="true" title="Topografia colorida do Pedal Hidrográfico">relevo</button>
+  <button data-b="sat" role="radio" aria-pressed="false">satélite</button>
+  <button data-b="osm" role="radio" aria-pressed="false" title="OpenStreetMap">osm</button>
+  <button data-b="igc" data-hist role="radio" aria-pressed="false" title="folhas topográficas IGC-SP, 1895–1920">1895–1920</button>
+  <button data-b="sara" data-hist role="radio" aria-pressed="false" title="mapeamento SARA Brasil, 1930">1930</button>
   <i class="sep" aria-hidden="true"></i>
   <button id="mediatoggle" aria-pressed="true" title="fotos no mapa">fotos</button>
 </div>
@@ -325,16 +319,17 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
     <p>Cada número no mapa é uma anomalia; clique para ler sua história e ver as
       fotos feitas no lugar. Os círculos com imagem são as fotos, no ponto exato
       em que foram tiradas; o cone claro mostra para onde a câmera olhava. O mapa
-      não traz nomes de municípios nem de bairros — só morros, serras e águas. Os
-      botões <b>1895–1920</b> e <b>1930</b> sobrepõem mapas históricos ao
-      relevo: no de 1930 o Tietê ainda serpenteia inteiro, e os morros de
-      rejeito ainda não existem.</p>
+      não traz nomes de municípios nem de bairros — só morros, serras e águas.
+      Escolhe-se um mapa de cada vez: relevo, satélite, OpenStreetMap ou as
+      folhas históricas de <b>1895–1920</b> e <b>1930</b> — onde a folha acaba,
+      fica o cinza. No mapa de 1930 o Tietê ainda serpenteia inteiro, e os
+      morros de rejeito ainda não existem.</p>
 
     <h4>o mapa</h4>
-    <p class="fine">O relevo é o da <a href="https://cameratopo.pedalhidrografi.co" target="_blank" rel="noopener">Câmera
-      Topográfica</a>: modelo digital de terreno de São Paulo (~5&nbsp;m) sobre o
-      FABDEM (30&nbsp;m), pintado com uma paleta cíclica entre 720 e 830&nbsp;m de
-      altitude e escurecido pela declividade — as várzeas ficam rosa, os
+    <p class="fine">O relevo é a <b>Topografia colorida</b> do
+      <a href="https://amora.pedalhidrografi.co" target="_blank" rel="noopener">Pedal Hidrográfico</a>,
+      o mapa topo-hidrográfico da Grande São Paulo: a elevação pintada com uma
+      paleta cíclica e escurecida pela declividade — as várzeas ficam rosa, os
       espigões escuros. Mapas históricos: folhas topográficas da Comissão
       Geográfica e Geológica (1895–1920), acervo do Instituto Geográfico e
       Cartográfico de São Paulo; mapeamento SARA Brasil (1930), acervo
@@ -373,11 +368,10 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
 "use strict";
 
 /* ---------------- config ---------------- */
-/* Relief palette: cmocean.phase between elevMin/elevMax (várzeas → rosa),
-   slope-darkened. Same params on both DEMs so they blend at the SP-DEM edge. */
-var RELIEF = "elevMin=720&elevMax=830&slopeMax=0.5&slopeGamma=1&cycles=1&ss=512";
-var RELEVO_FAB = "https://cameratopo.pedalhidrografi.co/{z}/{x}/{y}.png?"+RELIEF+"&dem=fabdem";
-var RELEVO_SP  = "https://cameratopo.pedalhidrografi.co/{z}/{x}/{y}.png?"+RELIEF+"&dem=sp";
+/* "Topografia colorida" of the Pedal Hidrográfico amora map: prebaked tiles
+   (z8–16) of the Grande São Paulo relief — elevation on a cyclic palette,
+   slope-darkened — the same map as in the presentation. */
+var RELEVO = "https://telhas.pedalhidrografi.co/rmsampa-v2/{z}/{x}/{y}.png";
 var SAT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 var OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 var TERRAIN = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
@@ -396,12 +390,9 @@ var map = new maplibregl.Map({
     version:8,
     glyphs:"https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
     sources:{
-      /* native ≈ z12.5 (30 m) and z15 (5 m); beyond that MapLibre overzooms
-         instead of asking the server for ever more on-demand renders */
-      relevofab:{type:"raster", tiles:[RELEVO_FAB], tileSize:256, maxzoom:13,
-        attribution:"relevo <a href='https://cameratopo.pedalhidrografi.co' target='_blank'>Câmera Topográfica</a> · FABDEM © University of Bristol"},
-      relevosp:{type:"raster", tiles:[RELEVO_SP], tileSize:256, maxzoom:15,
-        bounds:[-46.9482,-23.8062,-46.2347,-23.3730]},
+      relevo:{type:"raster", tiles:[RELEVO], tileSize:256, minzoom:8, maxzoom:16,
+        bounds:[-47.461,-24.207,-45.703,-22.918],
+        attribution:"Topografia colorida · <a href='https://amora.pedalhidrografi.co' target='_blank'>Pedal Hidrográfico</a>"},
       sat:{type:"raster", tiles:[SAT], tileSize:256, maxzoom:18,
         attribution:"imagens © Esri, Maxar, Earthstar Geographics"},
       osm:{type:"raster", tiles:[OSM], tileSize:256, maxzoom:19,
@@ -426,18 +417,17 @@ var map = new maplibregl.Map({
     },
     terrain:{source:"terrain", exaggeration:1.6},
     layers:[
-      {id:"bg", type:"background", paint:{"background-color":"#120c16"}},
-      {id:"base-relevo-fab", type:"raster", source:"relevofab",
-        paint:{"raster-fade-duration":180}},
-      {id:"base-relevo-sp", type:"raster", source:"relevosp",
+      /* neutral grey ground: what shows wherever the chosen map has no data */
+      {id:"bg", type:"background", paint:{"background-color":"#3b3b40"}},
+      {id:"base-relevo", type:"raster", source:"relevo",
         paint:{"raster-fade-duration":180}},
       {id:"base-sat", type:"raster", source:"sat", layout:{visibility:"none"}},
       {id:"base-osm", type:"raster", source:"osm", layout:{visibility:"none"}},
 
-      {id:"hist-igc", type:"raster", source:"igc", layout:{visibility:"none"},
-        paint:{"raster-opacity":0.9,"raster-fade-duration":150}},
-      {id:"hist-sara", type:"raster", source:"sara", layout:{visibility:"none"},
-        paint:{"raster-opacity":0.9,"raster-fade-duration":150}},
+      {id:"base-igc", type:"raster", source:"igc", layout:{visibility:"none"},
+        paint:{"raster-fade-duration":150}},
+      {id:"base-sara", type:"raster", source:"sara", layout:{visibility:"none"},
+        paint:{"raster-fade-duration":150}},
 
       {id:"water-fill", type:"fill", source:"water",
         paint:{"fill-color":"#A6C045","fill-opacity":0.16}},
@@ -727,10 +717,10 @@ function openAnom(a, opts){
       (a.text ? '<p class="story">'+esc(a.text)+'</p>' : '<p class="story todo">texto em preparação</p>')+
       '<div class="strip">'+strip+'</div>'+
       '<div class="actions">'+
-        '<button data-act="h:sara" aria-pressed="'+(hist==="sara")+'"'+(inSara?'':' disabled title="fora da cobertura do SARA 1930"')+'>mapa de 1930</button>'+
-        '<button data-act="h:igc" aria-pressed="'+(hist==="igc")+'">mapa 1895–1920</button>'+
-        '<button data-act="b:sat">satélite</button>'+
-        '<button data-act="b:relevo">relevo</button>'+
+        '<button data-act="b:sara" aria-pressed="'+(base==="sara")+'"'+(inSara?'':' disabled title="fora da cobertura do SARA 1930"')+'>mapa de 1930</button>'+
+        '<button data-act="b:igc" aria-pressed="'+(base==="igc")+'">mapa 1895–1920</button>'+
+        '<button data-act="b:sat" aria-pressed="'+(base==="sat")+'">satélite</button>'+
+        '<button data-act="b:relevo" aria-pressed="'+(base==="relevo")+'">relevo</button>'+
       '</div>'+
       '<table><tr><td>onde</td><td>'+fmtCoord(a.lat,a.lon)+'</td></tr></table>'+
       '<nav><button data-nav="-1">‹ anterior</button>'+
@@ -770,7 +760,6 @@ function wirePanel(){
     b.onclick = function(){
       var v = b.getAttribute("data-act").split(":");
       if(v[0]==="b") setBase(v[1]);
-      else if(v[0]==="h") setHist(hist===v[1] ? null : v[1]);
     };
   });
   var back = panel.querySelector("[data-back]");
@@ -963,20 +952,22 @@ map.on("click", function(e){
   if(panel.classList.contains("on") && !selMedia) closePanel();
 });
 
-/* ---------------- basemap + historical overlays ---------------- */
-var base = "relevo", hist = null;
+/* ---------------- mapa: um só de cada vez ---------------- */
+var base = "relevo";
+var HIST = {igc:1, sara:1};
+var HIDRO = ["hidro-minor","hidro-minor-tunnel","hidro-canal","hidro-canal-tunnel",
+             "hidro-river","hidro-river-tunnel","hidro-ridge","hidro-names"];
 function vis(id, on){ map.setLayoutProperty(id, "visibility", on ? "visible" : "none"); }
 function applyCarto(){
-  var plain = base==="relevo" && !hist;
+  var plain = base==="relevo";
   vis("water-fill", plain);
   vis("rail", plain);
   vis("roads", plain);
   vis("relevo-names", base!=="osm");
-  /* Morros e Águas stays on every base — that is its native context in the
-     amora map too; dim it a little over the historical sheets */
-  ["hidro-minor","hidro-minor-tunnel","hidro-canal","hidro-canal-tunnel",
-   "hidro-river","hidro-river-tunnel","hidro-ridge","hidro-names"].forEach(function(id){
-    var o = hist ? 0.75 : 1;
+  /* Morros e Águas stays on every map — that is its native context in the
+     amora map too; a little dimmer over the historical sheets */
+  var o = HIST[base] ? 0.75 : 1;
+  HIDRO.forEach(function(id){
     map.setPaintProperty(id, id==="hidro-names" ? "text-opacity" : "line-opacity",
       id==="hidro-minor" ? ["interpolate",["linear"],["zoom"],10.5,0,12,0.75*o]
       : id==="hidro-minor-tunnel" ? ["interpolate",["linear"],["zoom"],11,0,12.5,0.6*o]
@@ -988,45 +979,26 @@ function setBase(b){
   document.querySelectorAll("#basemaps button[data-b]").forEach(function(x){
     x.setAttribute("aria-pressed", x.getAttribute("data-b")===b);
   });
-  vis("base-relevo-fab", b==="relevo");
-  vis("base-relevo-sp", b==="relevo");
+  panel.querySelectorAll("[data-act^='b:']").forEach(function(x){
+    x.setAttribute("aria-pressed", b===x.getAttribute("data-act").slice(2));
+  });
+  vis("base-relevo", b==="relevo");
   vis("base-sat", b==="sat");
   vis("base-osm", b==="osm");
+  vis("base-igc", b==="igc");
+  vis("base-sara", b==="sara");
   applyCarto();
+  ensureZoomFor(b);
 }
-function setHist(h){
-  hist = h;
-  document.querySelectorAll("#basemaps button[data-h]").forEach(function(x){
-    x.setAttribute("aria-pressed", x.getAttribute("data-h")===h);
-  });
-  vis("hist-igc", h==="igc");
-  vis("hist-sara", h==="sara");
-  document.getElementById("histop").classList.toggle("on", !!h);
-  panel.querySelectorAll("[data-act^='h:']").forEach(function(x){
-    x.setAttribute("aria-pressed", h===x.getAttribute("data-act").slice(2));
-  });
-  applyCarto();
-  if(h){ ensureZoomFor(h); }
-}
-function ensureZoomFor(h){
+function ensureZoomFor(b){
   /* the 1930 sheets only exist from z10 — nudge in if the map is far out */
   var z = map.getZoom();
-  if(h==="sara" && z < 10.2) fly({zoom:11, center:selAnom ? [selAnom.lon,selAnom.lat] : [-46.64,-23.55], duration:1400});
-  if(h==="igc" && z < 8) fly({zoom:9, duration:1200});
+  if(b==="sara" && z < 10.2) fly({zoom:11, center:selAnom ? [selAnom.lon,selAnom.lat] : [-46.64,-23.55], duration:1400});
+  if(b==="igc" && z < 8) fly({zoom:9, duration:1200});
 }
 document.getElementById("basemaps").addEventListener("click", function(e){
-  var btn = e.target.closest("button");
-  if(!btn) return;
-  if(btn.getAttribute("data-b")) setBase(btn.getAttribute("data-b"));
-  else if(btn.getAttribute("data-h")){
-    var h = btn.getAttribute("data-h");
-    setHist(hist===h ? null : h);
-  }
-});
-document.getElementById("hop").addEventListener("input", function(){
-  var o = +this.value/100;
-  map.setPaintProperty("hist-igc","raster-opacity", o);
-  map.setPaintProperty("hist-sara","raster-opacity", o);
+  var btn = e.target.closest("button[data-b]");
+  if(btn) setBase(btn.getAttribute("data-b"));
 });
 map.once("load", applyCarto);
 
@@ -1160,7 +1132,7 @@ document.addEventListener("keydown", function(e){
 });
 
 /* console handle, também usado pelos testes */
-window.__map = map; window.__setBase = setBase; window.__setHist = setHist;
+window.__map = map; window.__setBase = setBase;
 window.__openAnom = function(id){ openAnom(anomById[id]); };
 window.__openMedia = function(id){ var m = media.find(function(x){return x.id===id}); if(m) openMedia(m); };
 window.__dismissIntro = dismissIntro;
