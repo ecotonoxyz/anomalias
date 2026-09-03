@@ -30,6 +30,7 @@ from scipy import ndimage
 ROOT = Path(__file__).resolve().parent.parent
 MAPS = ROOT / "maps"
 SCALE = 8            # analysis is done on a 1/8 overview
+HILITE_WIN = 9       # highlight-clip window at 1/8 scale (~1 km on both maps)
 BLOCK = 512          # rows per output block
 
 SETS = {
@@ -37,10 +38,10 @@ SETS = {
     # measured on the source: pitch and phase of the column/row edges)
     "sara1930": {"src": "sara1930.tif", "nodata": "white",
                  "lattice": (299.2, 108.7, 275.7, 115.9), "feather": 2,
-                 "warp4326": False},
+                 "warp4326": False, "dark": "offset"},
     # IGC: 0 = nodata; irregular patchwork → segment by tone steps and gaps
     "igc": {"src": "folhas-rmsp.tif", "nodata": "zero", "lattice": None,
-            "feather": 1, "warp4326": True},
+            "feather": 1, "warp4326": True, "dark": "inherit"},
 }
 
 
@@ -79,22 +80,59 @@ def detected_walls(lum, valid, thr=4.0):
     return walls
 
 
-def lattice_walls(shape, lattice):
-    H, W = shape
+def lattice_walls(lum, valid, lattice, tol=14, thr=6.0):
+    """Walls on the sheet lattice, SNAPPED locally: sheets are pasted with
+    small offsets, so within each cell band the wall moves to the strongest
+    tone step found within ±tol px of the nominal line (else stays on it).
+    A short connector closes the step between neighbouring bands."""
+    H, W = lum.shape
     px, phx, py, phy = [v / SCALE for v in lattice]
+    xs = sorted({int(round(x)) for x in np.arange(phx, W, px) if 0 < round(x) < W})
+    ys = sorted({int(round(y)) for y in np.arange(phy, H, py) if 0 < round(y) < H})
+    xe = [0] + xs + [W]
+    ye = [0] + ys + [H]
     walls = np.zeros((H, W), bool)
-    x = phx
-    while x < W:
-        walls[:, int(round(x))] = True
-        x += px
-    y = phy
-    while y < H:
-        walls[int(round(y)), :] = True
-        y += py
+    vv = valid.astype(np.float32)
+    dr = np.abs(np.diff(lum, axis=0)) * (vv[:-1] * vv[1:])      # step r→r+1
+    dc = np.abs(np.diff(lum, axis=1)) * (vv[:, :-1] * vv[:, 1:])  # step c→c+1
+    cr = vv[:-1] * vv[1:]
+    cc = vv[:, :-1] * vv[:, 1:]
+
+    for y0 in ys:                                   # horizontal walls
+        r0, r1 = max(0, y0 - tol), min(H - 1, y0 + tol)
+        prof = np.add.reduceat(dr[r0:r1], xe[:-1], axis=1)
+        cnt = np.add.reduceat(cr[r0:r1], xe[:-1], axis=1)
+        prof = np.where(cnt > 0, prof / np.maximum(cnt, 1), 0)
+        best, val = prof.argmax(axis=0), prof.max(axis=0)
+        # a real sheet edge stands well above the band's own texture;
+        # otherwise (uniform sheet, plain noise) the wall stays on the lattice
+        snap = (val > thr) & (val > 2.5 * np.median(prof, axis=0))
+        prev = None
+        for j in range(len(xe) - 1):
+            y = r0 + int(best[j]) + 1 if snap[j] else y0
+            walls[y, xe[j]:xe[j + 1]] = True
+            if prev is not None and prev != y:
+                walls[min(prev, y):max(prev, y) + 1, xe[j]] = True
+            prev = y
+    for x0 in xs:                                   # vertical walls
+        c0, c1 = max(0, x0 - tol), min(W - 1, x0 + tol)
+        prof = np.add.reduceat(dc[:, c0:c1], ye[:-1], axis=0)
+        cnt = np.add.reduceat(cc[:, c0:c1], ye[:-1], axis=0)
+        prof = np.where(cnt > 0, prof / np.maximum(cnt, 1), 0)
+        best, val = prof.argmax(axis=1), prof.max(axis=1)
+        snap = (val > thr) & (val > 2.5 * np.median(prof, axis=1))
+        prev = None
+        for i in range(len(ye) - 1):
+            x = c0 + int(best[i]) + 1 if snap[i] else x0
+            walls[ye[i]:ye[i + 1], x] = True
+            if prev is not None and prev != x:
+                walls[ye[i], min(prev, x):max(prev, x) + 1] = True
+            prev = x
     return walls
 
 
-def region_params(rgb, valid, labels, nlab, lo_p=3, hi_p=90, min_px=150):
+def region_params(rgb, valid, labels, nlab, dark="inherit", lo_p=3, hi_p=90,
+                  min_px=40):
     """Per-region linear map (A, B) per channel: ink→target ink, paper→target
     paper. Regions with too few pixels get no params (NaN) and later inherit
     the nearest region's."""
@@ -112,29 +150,39 @@ def region_params(rgb, valid, labels, nlab, lo_p=3, hi_p=90, min_px=150):
         px = rgb[:, sl[0], sl[1]][:, m]              # (3, n)
         ink = np.percentile(px, lo_p, axis=1)
         paper = np.percentile(px, hi_p, axis=1)
-        # not a paper-and-ink sheet (legend strips, colour keys, title
-        # blocks): no bright paper or almost no dynamic range → inherit the
-        # neighbours' correction instead of a wild stretch
-        if paper.mean() < 90 or (paper - ink).mean() < 30:
+        # no bright paper at all. On a sheet lattice (SARA) that is a dark
+        # scan of a real sheet cell → it gets its own offset (dark="offset");
+        # on the IGC patchwork it is a densely hatched sub-area or a legend
+        # strip → inherit the neighbours' (the parent sheet's) correction.
+        if paper.mean() < 90 and dark != "offset":
             continue
         stats[lab] = (ink, paper, m.sum())
         inks.append(ink); papers.append(paper); areas.append(m.sum())
-    t_ink = np.median(np.array(inks), axis=0)
-    t_paper = np.median(np.array(papers), axis=0)
+    bright = [i for i, pp in enumerate(papers) if pp.mean() >= 90]
+    t_ink = np.median(np.array(inks)[bright], axis=0)
+    t_paper = np.median(np.array(papers)[bright], axis=0)
     for lab, (ink, paper, n) in stats.items():
-        span = np.maximum(paper - ink, 8.0)
-        a = np.clip((t_paper - t_ink) / span, 0.5, 2.5)
-        A[lab] = a
-        B[lab] = t_ink - a * ink
+        span = paper - ink
+        # paper-anchored map: the sheet's paper lands EXACTLY on the target
+        # (that is what makes the mosaic uniform); the contrast gain that
+        # would also put its ink on target is bounded, and a sheet with too
+        # little dynamic range (blank paper, muddy scan) gets an offset only —
+        # stretching it would just amplify stains and noise.
+        if span.mean() < 50 or paper.mean() < 90:
+            g = np.ones(3, np.float32)
+        else:
+            g = np.clip((t_paper - t_ink) / np.maximum(span, 8.0), 0.6, 1.8)
+        A[lab] = g
+        B[lab] = t_paper - g * paper
     print(f"    {len(stats)} regions with stats; target ink {t_ink.round(1)} "
           f"paper {t_paper.round(1)}")
-    return A, B
+    return A, B, t_paper
 
 
-def build_param_maps(rgb, valid, walls, feather):
+def build_param_maps(rgb, valid, walls, feather, dark):
     labels, nlab = ndimage.label(valid & ~walls)
     print(f"    {nlab} regions")
-    A, B = region_params(rgb, valid, labels, nlab)
+    A, B, t_paper = region_params(rgb, valid, labels, nlab, dark=dark)
     good = ~np.isnan(A[:, 0])
     good[0] = False
     lab_ok = np.where(good[labels], labels, 0)
@@ -148,6 +196,23 @@ def build_param_maps(rgb, valid, walls, feather):
         for c in range(3):
             Amap[..., c] = ndimage.uniform_filter(Amap[..., c], size)
             Bmap[..., c] = ndimage.uniform_filter(Bmap[..., c], size)
+    # Second pass — highlight clip. Pieces pasted with a diagonal edge, or
+    # any patch whose paper is still brighter than the target after the
+    # per-region map (the segmentation is axis-aligned), get scaled down to
+    # the target paper by a LOCAL 90th percentile (~1 km window). Only the
+    # brighter-than-target direction is corrected, so hatched hills, forests
+    # and other legitimately darker areas are untouched.
+    corr = np.empty_like(Amap)
+    for c in range(3):
+        corr[..., c] = np.where(valid, Amap[..., c] * rgb[c] + Bmap[..., c], t_paper[c])
+    S = np.ones_like(Amap)
+    for c in range(3):
+        local = ndimage.percentile_filter(corr[..., c], 90, size=HILITE_WIN)
+        S[..., c] = np.clip(t_paper[c] / np.maximum(local, 1.0), 0.5, 1.0)
+        S[..., c] = ndimage.uniform_filter(S[..., c], 3)
+    Amap *= S
+    Bmap *= S
+    print(f"    highlight clip: {(S < 0.98).any(axis=2).mean()*100:.1f}% of pixels")
     return Amap, Bmap, labels
 
 
@@ -169,7 +234,7 @@ def upsample_rows(m, r0, r1, W):
     return out
 
 
-def uniformize(src_path, dst_path, nodata, lattice, feather):
+def uniformize(src_path, dst_path, nodata, lattice, feather, dark):
     with rasterio.open(src_path) as src:
         H, W = src.height, src.width
         h8, w8 = H // SCALE, W // SCALE
@@ -177,9 +242,9 @@ def uniformize(src_path, dst_path, nodata, lattice, feather):
         rgb8 = src.read([1, 2, 3], out_shape=(3, h8, w8)).astype(np.float32)
         valid8 = valid_mask(rgb8, nodata)
         lum8 = rgb8.mean(axis=0)
-        walls = lattice_walls(lum8.shape, lattice) if lattice else \
+        walls = lattice_walls(lum8, valid8, lattice) if lattice else \
             detected_walls(lum8, valid8)
-        Amap, Bmap, labels = build_param_maps(rgb8, valid8, walls, feather)
+        Amap, Bmap, labels = build_param_maps(rgb8, valid8, walls, feather, dark)
 
         prof = src.profile.copy()
         prof.update(count=3, dtype="uint8", tiled=True, blockxsize=512,
@@ -227,9 +292,11 @@ def main():
                      "-co", "TILED=YES", "-co", "COMPRESS=DEFLATE",
                      "-co", "BIGTIFF=YES", "-b", "1", "-b", "2", "-b", "3",
                      "-srcnodata", "0", "-dstnodata", "0", src, w])
-                uniformize(w, dst, cfg["nodata"], cfg["lattice"], cfg["feather"])
+                uniformize(w, dst, cfg["nodata"], cfg["lattice"], cfg["feather"],
+                           cfg["dark"])
         else:
-            uniformize(src, dst, cfg["nodata"], cfg["lattice"], cfg["feather"])
+            uniformize(src, dst, cfg["nodata"], cfg["lattice"], cfg["feather"],
+                       cfg["dark"])
 
 
 if __name__ == "__main__":

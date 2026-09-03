@@ -106,10 +106,20 @@ python3 scripts/build_tiles.py sara1930   # one of: igc, sara1930
 Needs the GeoTIFFs in `maps/` (`folhas-rmsp.tif`, `sara1930.tif`), GDAL
 with the WEBP driver, rasterio, SciPy. `uniformize_sheets.py` evens out the
 per-sheet colour and brightness of the scans: SARA is cut along its
-500 m sheet lattice (pitch/phase measured on the source, in `SETS`), the
-IGC patchwork is segmented by tone steps and nodata gaps; each region's
-paper (p90) and ink (p3) are mapped linearly onto the mosaic-wide medians,
-with the parameters feathered over a few pixels at region edges. Output is
+500 m sheet lattice (pitch/phase measured on the source, in `SETS`; each
+line snaps to the strongest local tone step within ±14 px of the analysis
+grid, since sheets are pasted with small offsets), the IGC patchwork is
+segmented by tone steps and nodata gaps; each region's
+paper (p90) is anchored exactly onto the mosaic-wide median paper, with a
+bounded contrast gain that also pulls its ink (p3) towards the median ink
+(an offset only for blank or muddy sheets). Regions with no bright paper at
+all get an offset of their own on SARA (`dark: "offset"`, they are real
+sheet cells) and inherit the surrounding sheet's correction on the IGC
+(`dark: "inherit"`, they are hatched sub-areas or legend strips).
+Parameters are feathered over a few pixels at region edges, and a final
+highlight-clip pass scales down any patch whose local paper (1 km window,
+90th percentile) is still brighter than the target — pieces pasted with a
+diagonal edge, for instance — leaving darker areas untouched. Output is
 git-ignored but must be deployed with the rest of `site/`.
 
 ## Preview and deploy
