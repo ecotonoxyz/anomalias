@@ -9,7 +9,7 @@
   "lon": -46.688268,
   "place": "margem do rio Pinheiros · Jurubatuba, Santo Amaro",
   "zoom": 14.3,
-  "text": "Na margem do Pinheiros, ao lado da ciclovia, um morro de cinquenta metros de altura e um quilômetro de comprimento. Quem passa vê um morro absolutamente normal — floresta plantada, sombra, um lugar refrescante. E ele é normal, só que é feito de rejeito: décadas de acúmulo do lixo da metrópole, um aterro sanitário que virou colina, com drenos de metano respirando por entre as árvores. Ele é mais ou menos morro? Não sabemos. Não nasceu de placas tectônicas, mas carrega memória e conta tantas histórias quanto os outros morros — só que histórias um pouco diferentes."
+  "text": "Na margem do Pinheiros, junto à ciclovia e à estação Jurubatuba, um morro de cinquenta metros de altura e um quilômetro de comprimento, coberto de floresta plantada. Quem passa vê um morro — e ele é um morro. Só que feito de trinta anos de lixo da metrópole: o antigo aterro de Santo Amaro, encerrado e ainda monitorado, respira metano pelos drenos e escorre chorume por baixo das árvores. Ele é mais ou menos morro? Não sabemos. Não nasceu de placas tectônicas, mas carrega memória e conta tantas histórias quanto os outros morros — só que histórias um pouco diferentes."
  },
  {
   "id": "braco",
@@ -21,7 +21,7 @@
   "lon": -46.779355,
   "place": "divisa Osasco – São Paulo · Jardim Rochdale",
   "zoom": 14.6,
-  "text": "Meandro sobrevivente da retificação do rio, iniciada nos anos 1940. Na divisa de Osasco com São Paulo, junto ao Jardim Rochdale, o velho leito insiste em permanecer: ainda é Tietê, ainda corre água, enquanto o canal reto passa ao lado. Aziz Ab'Sáber já o descrevia na tese Geomorfologia do Sítio Urbano de São Paulo (1957), entre as anomalias de drenagem da cidade. É um estudo sobre a falácia do progresso e da modernização: o rio endireitado para nunca mais transbordar, e o meandro que vai continuar sobrevivendo muito depois da gente. No mapa de 1930, ele ainda é o rio inteiro."
+  "text": "Quando a Light endireitou o Tietê, nos anos 1940, um meandro ficou para trás e o Jardim Rochdale virou ilha entre o rio novo e o velho. Ab'Sáber já o listava, na tese Geomorfologia do Sítio Urbano de São Paulo (1957), entre as anomalias de drenagem da cidade. O braço morto insiste: ainda corre água, ainda é Tietê. Ocupado até as margens, agora é a vez dele ser canalizado, em obras que prometem acabar com as enchentes. É um estudo sobre a falácia do progresso — o rio retificado para nunca mais transbordar, e o meandro que vai continuar sobrevivendo, de um jeito ou de outro, muito depois da gente. No mapa de 1930, ele ainda é o rio inteiro."
  },
  {
   "id": "cratera",
@@ -29,11 +29,11 @@
   "name": "A Cratera de Colônia",
   "short": "cratera de colônia",
   "kind": "nova",
-  "lat": -23.870810,
+  "lat": -23.87081,
   "lon": -46.706796,
   "place": "Parelheiros, extremo sul",
   "zoom": 12.9,
-  "text": "No extremo sul, em Parelheiros, um círculo de 3,6 km cercado de morros: a maior cratera de impacto inserida numa cidade, uma das duas crateras de meteoro urbanizadas do mundo. O meteoro nunca foi encontrado — supõe-se que fosse de gelo. Dentro dela construiu-se um bairro cuja história remonta aos colonos alemães e à sua eventual conversão para caipiras, nas palavras de Aziz, que a descreveu muito antes dos que dizem tê-la descoberto. Vista do chão é um lugar absolutamente banal, uma região do sul de São Paulo; e é justamente isso que abre tanto espaço para a imaginação."
+  "text": "No extremo sul, em Parelheiros, um círculo de 3,6 km cercado por uma borda de mais de cem metros: a marca de um meteoro caído há milhões de anos — talvez de gelo, porque dele nunca se achou pedaço. É a cratera de impacto mais próxima de uma grande cidade no mundo, reconhecida em fotos aéreas em 1961, mas descrita por Aziz muito antes dos que dizem tê-la descoberto. No fundo, um brejo de turfa que guarda o clima dos últimos milênios; ao redor, restos de Mata Atlântica e um bairro cuja história remonta aos colonos alemães e à sua eventual conversão para caipiras, nas palavras de Aziz. Vista do chão é um lugar banal do sul de São Paulo — e é isso que abre tanto espaço para a imaginação."
  },
  {
   "id": "floresta",
@@ -45,7 +45,7 @@
   "lon": -46.734598,
   "place": "rio Pinheiros · Jaguaré",
   "zoom": 15.2,
-  "text": "Uma ponte abandonada sobre o Pinheiros, erguida quando se imaginava uma São Paulo hidroviária, com mercadorias circulando pelos rios — uma cidade muito menos carrocrata, que não aconteceu. Sobre as estruturas de aço e concreto, árvores e arbustos se apropriaram do vão: uma floresta suspensa. É um exemplar de uma população de micro-ecossistemas compostos que se proliferam pela metrópole, vestígio de uma cidade que poderia ter sido, ocupada e reocupada por uma natureza que insiste em permanecer."
+  "text": "Espremido entre as duas pistas da ponte atual, sobrevive o arco de cinquenta metros da ponte do Jaguaré de 1937, alta o bastante para deixar passar os barcos de uma São Paulo hidroviária, com mercadorias circulando pelos rios, que não aconteceu. Desativada em 1974, só perdeu os arcos menores. Sobre o asfalto velho, tipuanas de flor amarela e um mato denso se apropriaram do vão: uma floresta suspensa sobre o Pinheiros. É um exemplar de uma população de micro-ecossistemas compostos que se proliferam pela metrópole, vestígio de uma cidade que poderia ter sido, reocupada por uma natureza que insiste em permanecer."
  },
  {
   "id": "canions",
@@ -53,11 +53,11 @@
   "name": "Os Cânions da Brasilândia",
   "short": "cânions da brasilândia",
   "kind": "nova",
-  "lat": -23.451310,
+  "lat": -23.45131,
   "lon": -46.707063,
   "place": "Brasilândia · Planalto de Taipas",
   "zoom": 14.8,
-  "text": "A menos de dez quilômetros do centro, o ribeirão Cabuçu desce do Planalto de Taipas — um platô cárstico a 850 metros, de morros globulares e pontos de sela, o mesmo tipo de terreno que forma cavernas — e, na transição para a planície sedimentar do Tietê, despenca numa cachoeira de dez metros seguida de corredeiras. Em seu entorno agregam-se disputas pela cidade. Não dá para presumir que a natureza tem que estar limpinha quando a gente chega: ou se luta por ela, ou se paga para molhar a cabeça no parque privatizado."
+  "text": "A menos de dez quilômetros do centro, o ribeirão Cabuçu desce do Planalto de Taipas — um platô cárstico a 850 metros, de morros globulares e pontos de sela, terreno de outra natureza que o resto da cidade — e, na transição para a planície sedimentar do Tietê, despenca numa cachoeira de dez metros seguida de corredeiras: cânions com quedas d'água no nariz de uma metrópole. Em seu entorno agregam-se disputas pela cidade — quem cuida, quem cerca, quem cobra. Não dá para presumir que a natureza tem que estar limpinha quando a gente chega: ou se luta por ela, ou se paga para molhar a cabeça no parque privatizado."
  },
  {
   "id": "mar",
@@ -69,7 +69,7 @@
   "lon": -46.667515,
   "place": "represa Billings · zona sul",
   "zoom": 14.0,
-  "text": "Uma estação hidroviária recém-criada na represa Billings, cujo nome já diz tudo: numa cidade sem praia, o mar é uma represa de água verde. Píer, barcos, a lua sobre a água. Em si só, uma anomalia — e um plano aberto para a imaginação, para associar esse nome à coisa paulistana de não ter mar."
+  "text": "Numa cidade sem praia, o mar é uma represa: a Billings, água que a Light represou nos anos 1920 para mover turbinas na serra e que virou beira-mar de bairro. Em 2025, a primeira linha de barcos do transporte público paulistano passou a ligar o Cantinho do Céu ao Parque Mar Paulista — 5,6 km em quinze minutos, contra mais de uma hora de ônibus. Píer, barcos, gaivotas, a lua sobre a água verde. O nome já diz tudo. Em si só, uma anomalia: uma bacia artificial usada como praia — e um plano aberto para a imaginação."
  },
  {
   "id": "poligono",
@@ -81,6 +81,6 @@
   "lon": -46.385389,
   "place": "Guaianases · zona leste",
   "zoom": 14.4,
-  "text": "Na serra de Guaianases, num território em disputa — ocupado, cercado, privado —, abrem-se fendas de trinta metros de altura num labirinto arenoso. Um posto de guarda avisa: POLÍGONO. Entre a grama alta e as nuvens baixas, o sétimo volume da série, o que ainda estamos absolutamente ansiosos para entrar."
+  "text": "Na serra de Guaianases, zona leste, um território em disputa — ocupado, cercado, privado — se abre em fendas de trinta metros num labirinto arenoso: voçorocas que consomem morros, um abismo humano-natural engolindo a paisagem e crescendo a cada chuva. Um posto de guarda avisa: POLÍGONO. Entre a grama alta e as nuvens baixas, o sétimo volume da série — o que ainda estamos absolutamente ansiosos para entrar."
  }
 ]
