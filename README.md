@@ -39,7 +39,9 @@ geodata/         raw Overpass / FlatGeobuf downloads cached by build_data.py (no
   `RELIEF` in `site/index.html` or before showing the site.
 - **Historical overlays** — `site/tiles/igc/` (IGC-SP sheets, 1895–1920,
   z7–14) and `site/tiles/sara1930/` (SARA Brasil 1930, z10–16), WebP XYZ
-  tiles baked from `maps/` by `scripts/build_tiles.py`. Toggled with the
+  tiles baked from `maps/` by `scripts/build_tiles.py` — the SARA mosaic's
+  white no-data (its alpha band is opaque everywhere) is keyed out to
+  transparent, and fully empty tiles are not written. Toggled with the
   *1895–1920* / *1930* buttons, with an opacity slider; on top of them the
   modern named rivers stay drawn in blue for comparison.
 - **Anomalias** — `site/data/anomalias.json`, hand-edited: id, number, name,

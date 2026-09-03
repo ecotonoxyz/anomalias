@@ -24,12 +24,17 @@ OUT = ROOT / "site" / "tiles"
 
 # name → source, zoom range, extra gdalwarp args.
 #   igc:      ~14.8 m/px scan (UTM 23S, nodata 0)  → native ≈ z13, z14 crisp
-#   sara1930: ~1.8 m/px mosaic (WGS84, alpha band) → native ≈ z16
+#   sara1930: ~1.8 m/px mosaic (WGS84). Its alpha band is 255 everywhere and
+#             the gaps between sheets are pure white, so white is keyed out
+#             (UNIFIED: only pixels white in all three bands) → native ≈ z16
 SETS = {
     "igc": {"src": "folhas-rmsp.tif", "zooms": "7-14",
             "warp": ["-b", "1", "-b", "2", "-b", "3", "-srcnodata", "0",
                      "-dstalpha"]},
-    "sara1930": {"src": "sara1930.tif", "zooms": "10-16", "warp": []},
+    "sara1930": {"src": "sara1930.tif", "zooms": "10-16",
+                 "warp": ["-b", "1", "-b", "2", "-b", "3",
+                          "-srcnodata", "255 255 255",
+                          "-wo", "UNIFIED_SRC_NODATA=YES", "-dstalpha"]},
 }
 
 
@@ -55,7 +60,7 @@ def build(name):
             shutil.rmtree(dst)
         run(["gdal2tiles", "--xyz", "-z", cfg["zooms"], "--processes=5",
              "--tiledriver=WEBP", "--webp-quality=78", "-r", "bilinear",
-             "-w", "none", "-q", warped, dst])
+             "--exclude", "-w", "none", "-q", warped, dst])
     n = sum(1 for _ in dst.rglob("*.webp"))
     mb = sum(f.stat().st_size for f in dst.rglob("*.webp")) / 1e6
     print(f"  -> {dst.relative_to(ROOT)}: {n} tiles, {mb:.0f} MB")
