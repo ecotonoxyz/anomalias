@@ -10,3 +10,6 @@ site/tiles/
 geodata/
 
 .vscode/
+
+# quick-look previews written next to the uniformised mosaics
+maps/*.preview.jpg
