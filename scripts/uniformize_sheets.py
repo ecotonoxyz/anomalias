@@ -38,10 +38,10 @@ SETS = {
     # measured on the source: pitch and phase of the column/row edges)
     "sara1930": {"src": "sara1930.tif", "nodata": "white",
                  "lattice": (299.2, 108.7, 275.7, 115.9), "feather": 2,
-                 "warp4326": False, "dark": "offset"},
+                 "warp4326": False, "dark": "offset", "chroma_clip": False},
     # IGC: 0 = nodata; irregular patchwork → segment by tone steps and gaps
     "igc": {"src": "folhas-rmsp.tif", "nodata": "zero", "lattice": None,
-            "feather": 1, "warp4326": True, "dark": "inherit"},
+            "feather": 1, "warp4326": True, "dark": "inherit", "chroma_clip": True},
 }
 
 
@@ -191,7 +191,7 @@ def region_params(rgb, valid, labels, nlab, dark="inherit", lo_p=3, hi_p=90,
     return A, B, t_paper
 
 
-def build_param_maps(rgb, valid, walls, feather, dark):
+def build_param_maps(rgb, valid, walls, feather, dark, chroma_clip):
     labels, nlab = ndimage.label(valid & ~walls)
     print(f"    {nlab} regions")
     A, B, t_paper = region_params(rgb, valid, labels, nlab, dark=dark)
@@ -217,15 +217,27 @@ def build_param_maps(rgb, valid, walls, feather, dark):
     corr = np.empty_like(Amap)
     for c in range(3):
         corr[..., c] = np.where(valid, Amap[..., c] * rgb[c] + Bmap[..., c], t_paper[c])
-    # one scalar per pixel from LUMINANCE: scaling channels separately
-    # shifted the hue wherever the overshoot differed between channels
-    lum = corr.mean(axis=2)
-    local = ndimage.percentile_filter(lum, 90, size=HILITE_WIN)
-    S = np.clip(t_paper.mean() / np.maximum(local, 1.0), 0.5, 1.0)
-    S = ndimage.uniform_filter(S, 3)
-    Amap *= S[..., None]
-    Bmap *= S[..., None]
-    print(f"    highlight clip: {(S < 0.98).mean()*100:.1f}% of pixels")
+    if chroma_clip:
+        # per channel, but smoothed over ~3 km: corrects a tinted patch (a
+        # bluish half-sheet on the IGC) without reacting to paper mottling
+        S = np.ones_like(Amap)
+        for c in range(3):
+            local = ndimage.percentile_filter(corr[..., c], 90, size=HILITE_WIN)
+            local = ndimage.uniform_filter(local, 3 * HILITE_WIN)
+            S[..., c] = np.clip(t_paper[c] / np.maximum(local, 1.0), 0.5, 1.0)
+        Amap *= S
+        Bmap *= S
+        print(f"    highlight clip (chroma): {(S < 0.98).any(axis=2).mean()*100:.1f}% of pixels")
+    else:
+        # one scalar per pixel from LUMINANCE: scaling channels separately
+        # shifted the hue on SARA's mottled sheets
+        lum = corr.mean(axis=2)
+        local = ndimage.percentile_filter(lum, 90, size=HILITE_WIN)
+        S = np.clip(t_paper.mean() / np.maximum(local, 1.0), 0.5, 1.0)
+        S = ndimage.uniform_filter(S, 3)
+        Amap *= S[..., None]
+        Bmap *= S[..., None]
+        print(f"    highlight clip: {(S < 0.98).mean()*100:.1f}% of pixels")
     return Amap, Bmap, labels
 
 
@@ -247,7 +259,7 @@ def upsample_rows(m, r0, r1, W):
     return out
 
 
-def uniformize(src_path, dst_path, nodata, lattice, feather, dark):
+def uniformize(src_path, dst_path, nodata, lattice, feather, dark, chroma_clip):
     with rasterio.open(src_path) as src:
         H, W = src.height, src.width
         h8, w8 = H // SCALE, W // SCALE
@@ -257,7 +269,8 @@ def uniformize(src_path, dst_path, nodata, lattice, feather, dark):
         lum8 = rgb8.mean(axis=0)
         walls = lattice_walls(rgb8, valid8, lattice) if lattice else \
             detected_walls(lum8, valid8)
-        Amap, Bmap, labels = build_param_maps(rgb8, valid8, walls, feather, dark)
+        Amap, Bmap, labels = build_param_maps(rgb8, valid8, walls, feather, dark,
+                                              chroma_clip)
 
         prof = src.profile.copy()
         prof.update(count=3, dtype="uint8", tiled=True, blockxsize=512,
@@ -306,10 +319,10 @@ def main():
                      "-co", "BIGTIFF=YES", "-b", "1", "-b", "2", "-b", "3",
                      "-srcnodata", "0", "-dstnodata", "0", src, w])
                 uniformize(w, dst, cfg["nodata"], cfg["lattice"], cfg["feather"],
-                           cfg["dark"])
+                           cfg["dark"], cfg["chroma_clip"])
         else:
             uniformize(src, dst, cfg["nodata"], cfg["lattice"], cfg["feather"],
-                       cfg["dark"])
+                       cfg["dark"], cfg["chroma_clip"])
 
 
 if __name__ == "__main__":

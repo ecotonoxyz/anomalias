@@ -141,6 +141,9 @@ gcloud storage rsync --recursive site gs://ecotono-data/site/anomalias
 
 New files are live on the next request; an *overwritten* file (say
 `index.html`) can take from one to twenty minutes to show, while the
-server's bucket mount refreshes its cache. **Caveat:** `gcs-push.sh --mirror` in
+server's bucket mount refreshes its cache. Something on the server side
+also drops precompressed `*.gz` siblings into the bucket (an
+`index.html.gz` appeared next to `index.html`); after overwriting a file,
+delete its stale `.gz` sibling if there is one. **Caveat:** `gcs-push.sh --mirror` in
 the www.ecotono.xyz repo mirrors *its* `site/` over the bucket and would
 delete `site/anomalias` — re-run the rsync above after any `--mirror` push.
