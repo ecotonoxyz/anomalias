@@ -1,0 +1,86 @@
+[
+ {
+  "id": "colina",
+  "n": 1,
+  "name": "A Colina de Rejeito de Santo Amaro",
+  "short": "colina de rejeito",
+  "kind": "nova",
+  "lat": -23.694041,
+  "lon": -46.688268,
+  "place": "margem do rio Pinheiros · Jurubatuba, Santo Amaro",
+  "zoom": 14.3,
+  "text": "Na margem do Pinheiros, ao lado da ciclovia, um morro de cinquenta metros de altura e um quilômetro de comprimento. Quem passa vê um morro absolutamente normal — floresta plantada, sombra, um lugar refrescante. E ele é normal, só que é feito de rejeito: décadas de acúmulo do lixo da metrópole, um aterro sanitário que virou colina, com drenos de metano respirando por entre as árvores. Ele é mais ou menos morro? Não sabemos. Não nasceu de placas tectônicas, mas carrega memória e conta tantas histórias quanto os outros morros — só que histórias um pouco diferentes."
+ },
+ {
+  "id": "braco",
+  "n": 2,
+  "name": "O Braço Morto do Tietê",
+  "short": "braço morto do tietê",
+  "kind": "antiga",
+  "lat": -23.505268,
+  "lon": -46.779355,
+  "place": "divisa Osasco – São Paulo · Jardim Rochdale",
+  "zoom": 14.6,
+  "text": "Meandro sobrevivente da retificação do rio, iniciada nos anos 1940. Na divisa de Osasco com São Paulo, junto ao Jardim Rochdale, o velho leito insiste em permanecer: ainda é Tietê, ainda corre água, enquanto o canal reto passa ao lado. Aziz Ab'Sáber já o descrevia na tese Geomorfologia do Sítio Urbano de São Paulo (1957), entre as anomalias de drenagem da cidade. É um estudo sobre a falácia do progresso e da modernização: o rio endireitado para nunca mais transbordar, e o meandro que vai continuar sobrevivendo muito depois da gente. No mapa de 1930, ele ainda é o rio inteiro."
+ },
+ {
+  "id": "cratera",
+  "n": 3,
+  "name": "A Cratera de Colônia",
+  "short": "cratera de colônia",
+  "kind": "nova",
+  "lat": -23.870810,
+  "lon": -46.706796,
+  "place": "Parelheiros, extremo sul",
+  "zoom": 12.9,
+  "text": "No extremo sul, em Parelheiros, um círculo de 3,6 km cercado de morros: a maior cratera de impacto inserida numa cidade, uma das duas crateras de meteoro urbanizadas do mundo. O meteoro nunca foi encontrado — supõe-se que fosse de gelo. Dentro dela construiu-se um bairro cuja história remonta aos colonos alemães e à sua eventual conversão para caipiras, nas palavras de Aziz, que a descreveu muito antes dos que dizem tê-la descoberto. Vista do chão é um lugar absolutamente banal, uma região do sul de São Paulo; e é justamente isso que abre tanto espaço para a imaginação."
+ },
+ {
+  "id": "floresta",
+  "n": 4,
+  "name": "A Floresta Suspensa do Jaguaré",
+  "short": "floresta suspensa do jaguaré",
+  "kind": "nova",
+  "lat": -23.545755,
+  "lon": -46.734598,
+  "place": "rio Pinheiros · Jaguaré",
+  "zoom": 15.2,
+  "text": "Uma ponte abandonada sobre o Pinheiros, erguida quando se imaginava uma São Paulo hidroviária, com mercadorias circulando pelos rios — uma cidade muito menos carrocrata, que não aconteceu. Sobre as estruturas de aço e concreto, árvores e arbustos se apropriaram do vão: uma floresta suspensa. É um exemplar de uma população de micro-ecossistemas compostos que se proliferam pela metrópole, vestígio de uma cidade que poderia ter sido, ocupada e reocupada por uma natureza que insiste em permanecer."
+ },
+ {
+  "id": "canions",
+  "n": 5,
+  "name": "Os Cânions da Brasilândia",
+  "short": "cânions da brasilândia",
+  "kind": "nova",
+  "lat": -23.451310,
+  "lon": -46.707063,
+  "place": "Brasilândia · Planalto de Taipas",
+  "zoom": 14.8,
+  "text": "A menos de dez quilômetros do centro, o ribeirão Cabuçu desce do Planalto de Taipas — um platô cárstico a 850 metros, de morros globulares e pontos de sela, o mesmo tipo de terreno que forma cavernas — e, na transição para a planície sedimentar do Tietê, despenca numa cachoeira de dez metros seguida de corredeiras. Em seu entorno agregam-se disputas pela cidade. Não dá para presumir que a natureza tem que estar limpinha quando a gente chega: ou se luta por ela, ou se paga para molhar a cabeça no parque privatizado."
+ },
+ {
+  "id": "mar",
+  "n": 6,
+  "name": "O Mar Paulista",
+  "short": "mar paulista",
+  "kind": "nova",
+  "lat": -23.706353,
+  "lon": -46.667515,
+  "place": "represa Billings · zona sul",
+  "zoom": 14.0,
+  "text": "Uma estação hidroviária recém-criada na represa Billings, cujo nome já diz tudo: numa cidade sem praia, o mar é uma represa de água verde. Píer, barcos, a lua sobre a água. Em si só, uma anomalia — e um plano aberto para a imaginação, para associar esse nome à coisa paulistana de não ter mar."
+ },
+ {
+  "id": "poligono",
+  "n": 7,
+  "name": "O Polígono das Voçorocas",
+  "short": "polígono das voçorocas",
+  "kind": "nova",
+  "lat": -23.563526,
+  "lon": -46.385389,
+  "place": "Guaianases · zona leste",
+  "zoom": 14.4,
+  "text": "Na serra de Guaianases, num território em disputa — ocupado, cercado, privado —, abrem-se fendas de trinta metros de altura num labirinto arenoso. Um posto de guarda avisa: POLÍGONO. Entre a grama alta e as nuvens baixas, o sétimo volume da série, o que ainda estamos absolutamente ansiosos para entrar."
+ }
+]

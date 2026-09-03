@@ -1,0 +1,12 @@
+.DS_Store
+
+# source rasters (1.3 GB) and their baked tiles (~200 MB) — regenerate with
+# scripts/build_tiles.py; deploy site/tiles with the rest of site/
+maps/*.tif
+maps/*.tif.aux.xml
+site/tiles/
+
+# raw downloads cached by scripts/build_data.py (Overpass, FlatGeobuf)
+geodata/
+
+.vscode/
