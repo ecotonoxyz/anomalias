@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://telhas.pedalhidrografi.co">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -22,8 +22,11 @@
   --ink:#fff; --ground:#120c16; --panel:rgba(19,12,22,.94); --line:rgba(255,255,255,.14);
   --muted:rgba(255,255,255,.66); --faint:rgba(255,255,255,.42);
   --pink:#ff4fa0; --amber:#ffc95e; --cyan:#39d8d0; --sepia:#d9b27c;
-  --display:'Space Grotesk',system-ui,sans-serif;
-  --ui:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* titles in Kefa (Apple system slab), everything else in Baskerville;
+     Google Fonts fallbacks for devices without them */
+  --title:'Kefa','Roboto Slab','Rockwell',serif;
+  --display:'Baskerville','Libre Baskerville','Times New Roman',serif;
+  --ui:'Baskerville','Libre Baskerville','Times New Roman',serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
@@ -39,7 +42,7 @@ button{font-family:inherit}
 #brandwrap{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;z-index:30}
 #brand{background:none;border:0;color:#fff;cursor:pointer;text-align:left;padding:6px 8px;
   font-family:var(--display);text-shadow:0 1px 10px rgba(0,0,0,.7)}
-#brand b{display:block;font-size:17px;font-weight:700;letter-spacing:.02em;line-height:1.05}
+#brand b{display:block;font:700 18px/1.05 var(--title);letter-spacing:.01em}
 #brand span{font-size:12px;font-weight:600;color:rgba(255,255,255,.85)}
 #brand em{display:block;margin-top:3px;font-style:normal;font-size:10.5px;
   font-weight:600;letter-spacing:.05em;color:var(--amber)}
@@ -111,12 +114,12 @@ body.intro-open #index{display:none}
 #panel figure{margin:0;background:#000;border-radius:16px 16px 0 0;overflow:hidden;line-height:0}
 #panel figure img{width:100%;max-height:48vh;object-fit:contain;display:block}
 #panel .body{padding:16px 18px 18px}
-#panel .eyebrow{margin:0 0 4px;font:700 10.5px var(--display);letter-spacing:.16em;
+#panel .eyebrow{margin:0 0 4px;padding-right:36px;font:700 10.5px var(--display);letter-spacing:.11em;
   text-transform:uppercase;color:var(--pink)}
 #panel .eyebrow button{border:0;background:none;padding:0;color:inherit;font:inherit;
   cursor:pointer;text-decoration:underline;text-underline-offset:2px;letter-spacing:inherit;text-transform:inherit}
 #panel .eyebrow button:hover{color:#fff}
-#panel h3{margin:0 0 2px;font:700 22px/1.12 var(--display);letter-spacing:.005em}
+#panel h3{margin:0 0 2px;font:700 23px/1.12 var(--title);letter-spacing:.005em}
 #panel .place{margin:0 0 10px;font:600 12.5px var(--display);color:var(--amber)}
 #panel .story{margin:10px 0 4px;font:500 14.5px/1.6 var(--display);color:rgba(255,255,255,.92)}
 #panel .story.todo{color:var(--faint);font-style:italic}
@@ -161,7 +164,7 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
   background:linear-gradient(180deg,rgba(10,5,14,.6),rgba(10,5,14,.14) 30%,rgba(10,5,14,.14) 62%,rgba(10,5,14,.75));
   opacity:1;transition:opacity .9s}
 .veil.off{opacity:0;pointer-events:none}
-#intro h1{margin:0;font-family:var(--display);font-weight:700;letter-spacing:-.01em;
+#intro h1{margin:0;font-family:var(--title);font-weight:700;letter-spacing:0;
   font-size:clamp(34px,7.2vw,76px);line-height:.95;text-shadow:0 2px 24px rgba(0,0,0,.55)}
 #intro h1 small{display:block;margin-top:8px;font-size:clamp(15px,2.6vw,24px);font-weight:600;
   letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
@@ -180,7 +183,7 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
 #about .card{position:relative;max-width:660px;max-height:calc(100% - 48px);overflow-y:auto;
   background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:34px 36px;
   text-align:left;box-shadow:0 24px 80px rgba(0,0,0,.7)}
-#about h2{margin:0 0 4px;font:700 26px/1.1 var(--display)}
+#about h2{margin:0 0 4px;font:700 27px/1.1 var(--title)}
 #about h2 small{display:block;font-size:15px;font-weight:600;color:var(--muted)}
 #about h4{margin:22px 0 6px;font:700 11px var(--display);letter-spacing:.16em;
   text-transform:uppercase;color:var(--pink)}
