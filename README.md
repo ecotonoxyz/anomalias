@@ -75,6 +75,34 @@ photo.
 
 ## Updating content
 
+### From the phone, in the field
+
+The live page has a **+ foto** button (next to *fotos* in the map selector). It asks
+once for the Ecótono edit senha — the same one as `www.ecotono.xyz/login.html`, shared
+because both are the same origin — and posts the untouched original to
+`POST /api/anomalias/upload` on the edit server, which derives the web copy and thumb
+and appends the entry to `media.json`. The marker appears immediately.
+
+Position comes from the photo's own GPS EXIF. When there is none (a screenshot, or a
+phone that strips it) the server says so and the form offers the current map centre,
+optionally taking the map's bearing as the heading. The original is kept server-side
+for that second step, so the photo is only uploaded once.
+
+Uploaded originals land in `gs://ecotono-data/raw/anomalias/` as `up-<sha1>.jpeg` and
+are **git-ignored** — this repo is public and they are full-resolution photos carrying
+GPS EXIF. Bring them down (and everything else the upload wrote) with:
+
+```
+scripts/pull_uploads.sh          # ALWAYS before a deploy rsync
+```
+
+It refuses to run over uncommitted `media.json` edits, pulls the originals and the
+bucket's `media.json`, then rebuilds the derived images. `build_data.py` itself aborts
+if any entry has lost its source, so a rebuild can never quietly delete a published
+photo.
+
+### From the laptop
+
 1. Drop new photos into `images/raw/` (keep GPS EXIF — beware exports that
    strip it; Apple Photos "export unmodified original" keeps it).
 2. `python3 scripts/build_data.py media` (needs exiftool + Pillow). Photos
@@ -85,6 +113,10 @@ photo.
    `anom` if the nearest-anomaly guess is wrong. These fields survive
    rebuilds (keyed by the source filename).
 4. Edit the stories in `site/data/anomalias.json` directly.
+
+Never rename a file in `images/raw/`: the editorial fields (`title`, `text`, `anom`,
+and a hand-placed `lat`/`lon`) are keyed by its stem, so a rename loses them — and for
+a map-placed photo that means losing its position, which drops it entirely.
 
 The cartography steps (`hidro roads water places`) only need re-running if
 the display window or the label list in `scripts/build_data.py` change;
@@ -136,14 +168,21 @@ at `ecotono.xyz/anomalias`. Deploy is the same rsync as ilhasdepedra
 (`site/tiles` included, ~200 MB the first time, incremental afterwards):
 
 ```
+scripts/pull_uploads.sh          # first: fold in anything uploaded from the phone
 gcloud storage rsync --recursive site gs://ecotono-data/site/anomalias
 ```
 
+The rsync overwrites the bucket's `site/anomalias/data/media.json` with the local one,
+so skipping the pull would erase photos uploaded since the last deploy while their
+jpegs stay orphaned in the bucket. Uploads also read-modify-write that file, so leave
+at least 20 minutes between a deploy and the next phone upload (the running instance
+can serve a cached copy of an overwritten file for that long) and never upload while a
+deploy is in flight.
+
 New files are live on the next request; an *overwritten* file (say
 `index.html`) can take from one to twenty minutes to show, while the
-server's bucket mount refreshes its cache. Something on the server side
-also drops precompressed `*.gz` siblings into the bucket (an
-`index.html.gz` appeared next to `index.html`); after overwriting a file,
-delete its stale `.gz` sibling if there is one. **Caveat:** `gcs-push.sh --mirror` in
+server's bucket mount refreshes its cache. (The server used to write
+precompressed `*.gz` siblings; that build step is gone, so any `.gz` still
+in the bucket is a leftover and can be deleted.) **Caveat:** `gcs-push.sh --mirror` in
 the www.ecotono.xyz repo mirrors *its* `site/` over the bucket and would
 delete `site/anomalias` — re-run the rsync above after any `--mirror` push.

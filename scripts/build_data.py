@@ -15,6 +15,7 @@ which survive rebuilds — they are keyed by the source photo's filename.
 """
 import json
 import math
+import re
 import shutil
 import subprocess
 import sys
@@ -40,6 +41,8 @@ WATER_FGB = ("https://telhas.pedalhidrografi.co/viario/"
              "south-america-water-areas.fgb")
 # A photo is attached to the closest anomaly if it is within this radius.
 ATTACH_M = 3000
+# set by --allow-drop: let a rebuild remove media.json entries whose source is gone
+ALLOW_DROP = False
 
 
 def run(cmd, **kw):
@@ -259,11 +262,20 @@ def build_media():
     items, used_ids = [], set()
     for meta in raw:
         src = Path(meta["SourceFile"])
+        prev = old.get(src.stem, {})    # bound before the GPS test: a photo uploaded through
+                                        # the page and placed by hand has no GPS in its EXIF,
+                                        # only a position in media.json
         lat, lon = meta.get("GPSLatitude"), meta.get("GPSLongitude")
         if lat is None or lon is None:
-            print(f"  !! {src.name}: no GPS, skipped"); continue
-        prev = old.get(src.stem, {})
-        dt = meta.get("DateTimeOriginal") or meta.get("CreateDate") or ""
+            lat, lon = prev.get("lat"), prev.get("lon")
+        if lat is None or lon is None:
+            print(f"  !! {src.name}: no GPS and no saved position, skipped"); continue
+        dt = str(meta.get("DateTimeOriginal") or meta.get("CreateDate") or "").strip()
+        # EXIF is written by whoever made the file and ends up in an id, a filename and
+        # the page's metadata table. Accept only a well-formed stamp; the upload endpoint
+        # (anomalias_media._exif_dt) applies the same test, so both agree on the fallback.
+        if not re.match(r"\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}$", dt):
+            dt = ""
 
         near = min(anoms, key=lambda a: dist_m(lat, lon, a["lat"], a["lon"]))
         auto = near["id"] if dist_m(lat, lon, near["lat"], near["lon"]) <= ATTACH_M else ""
@@ -277,19 +289,26 @@ def build_media():
             mid += "b"
         used_ids.add(mid)
 
-        # web copy: orientation baked in, ≤1600 px; square thumb for markers
+        # web copy: orientation baked in, ≤1600 px; square thumb for markers.
+        # Reuse an existing file only when this id already belonged to THIS source in the
+        # media.json we loaded — ids can be reassigned (the "b" suffix resolves collisions
+        # in filename order here but in upload order on the server), and a stale reuse
+        # would show the other photo under this entry.
+        same = any(m.get("id") == mid and m.get("src") == src.stem for m in old.values())
         im = ImageOps.exif_transpose(Image.open(src))
         web = MEDIA / f"{mid}.jpeg"
-        if not web.exists():
+        if not (web.exists() and same):
             w = im.convert("RGB"); w.thumbnail((1600, 1600))
             w.save(web, quality=85, optimize=True)
         th = THUMB / f"{mid}.jpeg"
-        if not th.exists():
+        if not (th.exists() and same):
             ImageOps.fit(im.convert("RGB"), (256, 256)).save(
                 th, quality=75, optimize=True)
 
         wpx, hpx = im.width, im.height
         heading = meta.get("GPSImgDirection")
+        if heading is None:             # same reason as lat/lon above (alt needs no fallback:
+            heading = prev.get("heading")   # a photo with no GPS IFD has none on either side)
         alt = meta.get("GPSAltitude")
         items.append({
             "id": mid, "src": src.stem, "file": web.name,
@@ -306,6 +325,24 @@ def build_media():
             "text": prev.get("text", ""),
         })
 
+    # media.json is rewritten from whatever is in images/raw, and photos uploaded through
+    # the page are git-ignored (they live in the bucket). A rebuild run before pulling them
+    # would therefore delete published photos from the site. Refuse by default: the entries
+    # are recoverable from the bucket, a deployed media.json is not.
+    seen = {m["src"] for m in items}
+    lost = sorted(s for s in old if s not in seen)
+    if lost and not ALLOW_DROP:
+        raise SystemExit(
+            f"  !! {len(lost)} entries in media.json have no source in {IMAGES}:\n"
+            + "\n".join(f"       {s}" for s in lost)
+            + "\n     Rebuilding would drop them from the site."
+            "\n     If they were uploaded through the page:  scripts/pull_uploads.sh"
+            "\n     If you deleted them on purpose:           "
+            "python3 scripts/build_data.py media --allow-drop")
+    if lost:
+        print(f"    dropping {len(lost)} entries with no source (--allow-drop): "
+              + ", ".join(lost))
+
     items.sort(key=lambda m: m["datetime"] or "")
     mj.write_text(json.dumps(items, ensure_ascii=False, indent=1))
     per = {a["id"]: sum(1 for m in items if m["anom"] == a["id"]) for a in anoms}
@@ -318,7 +355,9 @@ if __name__ == "__main__":
     DATA.mkdir(parents=True, exist_ok=True)
     steps = {"hidro": build_hidro, "roads": build_roads, "water": build_water,
              "places": build_places, "media": build_media}
-    only = sys.argv[1:]
+    args = sys.argv[1:]
+    ALLOW_DROP = "--allow-drop" in args
+    only = [a for a in args if not a.startswith("-")]
     for name, fn in steps.items():
         if only and name not in only:
             continue

@@ -146,6 +146,37 @@ body.intro-open #index{display:none}
 #panel .actions button[aria-pressed="true"]{border-color:var(--sepia);color:var(--sepia)}
 #panel .actions button:disabled{opacity:.35;cursor:default}
 
+/* ---------- upload form (inside the panel) ---------- */
+#panel form.up{display:block;margin-top:2px}
+/* an explicit rule: the label/input styles below would otherwise beat the UA's [hidden] */
+#panel form.up [hidden]{display:none!important}
+#panel form.up label{display:block;margin:13px 0 4px;font:700 10.5px var(--display);
+  letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
+#panel form.up label.file{display:inline-block;margin:0;padding:8px 14px;border:1px solid var(--line);
+  border-radius:99px;cursor:pointer;color:#fff;font:600 12.5px var(--display);
+  letter-spacing:.02em;text-transform:none}
+#panel form.up label.file:hover{border-color:var(--pink);color:var(--pink)}
+#panel form.up label.file input{display:none}
+#panel form.up input[type=text],#panel form.up input[type=password],
+#panel form.up textarea,#panel form.up select{width:100%;padding:9px 11px;
+  border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.05);
+  color:#fff;font:400 16px/1.45 var(--display)}   /* 16px keeps iOS from zooming on focus */
+#panel form.up textarea{resize:vertical}
+#panel form.up .prev{border-radius:12px;margin:12px 0 0}
+#panel form.up .prev img{max-height:32vh}
+#panel form.up .hint{margin:7px 0 0;font:500 12px var(--display);color:var(--faint)}
+#panel form.up .geo{margin:13px 0 0;padding:10px 12px;border:1px solid var(--amber);
+  border-radius:10px;color:var(--amber)}
+#panel form.up .geo p{margin:0 0 8px;font:600 12.5px var(--display)}
+#panel form.up .geo label.cb{margin:0;color:var(--amber);font:600 12.5px var(--display);
+  letter-spacing:0;text-transform:none}
+#panel form.up .geo label.cb input{width:auto;margin-right:6px}
+#panel form.up .err{margin:11px 0 0;min-height:1em;font:600 12.5px/1.4 var(--display);color:var(--pink)}
+#panel form.up .send{margin-top:14px;width:100%;padding:11px;border:1px solid var(--line);
+  border-radius:99px;background:none;color:#fff;font:700 13.5px var(--display);cursor:pointer}
+#panel form.up .send:hover{border-color:var(--pink);color:var(--pink)}
+#panel form.up .send:disabled{opacity:.5;cursor:default}
+
 /* ---------- media markers ---------- */
 /* the .mk root is positioned by maplibre (absolute + per-frame transform) —
    it must carry no transform transition nor a position override, or markers
@@ -239,6 +270,7 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
   <button data-b="sara" data-hist role="radio" aria-pressed="false" title="mapeamento SARA Brasil, 1930">1930</button>
   <i class="sep" aria-hidden="true"></i>
   <button id="mediatoggle" aria-pressed="true" title="fotos no mapa">fotos</button>
+  <button id="addphoto" role="button" title="enviar uma foto (precisa da senha de edição)">+ foto</button>
 </div>
 
 <div id="camctl" role="group" aria-label="controles da câmera">
@@ -671,8 +703,8 @@ function openAnom(a, opts){
   var fotos = media.filter(function(m){ return m.anom===a.id; });
   var strip = fotos.length
     ? fotos.map(function(m){
-        return '<button data-m="'+m.id+'" title="'+esc(m.title||m.id)+'" '+
-          'style="background-image:url(\'media/t/'+m.id+'.jpeg\')" aria-label="'+esc(m.title||m.id)+'"></button>';
+        return '<button data-m="'+esc(m.id)+'" title="'+esc(m.title||m.id)+'" '+
+          'style="background-image:url(&quot;media/t/'+esc(m.id)+'.jpeg&quot;)" aria-label="'+esc(m.title||m.id)+'"></button>';
       }).join("")
     : '<span class="none">ainda sem fotos — em breve</span>';
   var inSara = a.lon > -46.862 && a.lon < -46.328 && a.lat > -23.691 && a.lat < -23.343;
@@ -750,18 +782,7 @@ fetch("data/media.json").then(function(r){return r.json()}).then(function(items)
   media = items;
   refreshCones();
 
-  items.forEach(function(m){
-    var el = document.createElement("div");
-    el.className = "mk";
-    el.setAttribute("role","button");
-    el.setAttribute("aria-label", m.title || m.id);
-    var face = document.createElement("div");
-    face.className = "face";
-    face.style.backgroundImage = "url('media/t/"+m.id+".jpeg')";
-    el.appendChild(face);
-    el.addEventListener("click", function(e){ e.stopPropagation(); openMedia(m); });
-    markers[m.id] = new maplibregl.Marker({element:el}).setLngLat([m.lon,m.lat]).addTo(map);
-  });
+  items.forEach(function(m){ addMediaMarker(m); });
   declutter();
   return anomsReady;
 }).then(function(){
@@ -776,6 +797,22 @@ fetch("data/media.json").then(function(r){return r.json()}).then(function(items)
   updateCount();
 }).catch(function(e){ console.warn("media", e); });
 
+/* hoisted on purpose: the media.json callback above runs before the rest of this
+   script has been evaluated, and an upload needs the same builder afterwards. */
+function addMediaMarker(m){
+  var el = document.createElement("div");
+  el.className = "mk";
+  el.setAttribute("role","button");
+  el.setAttribute("aria-label", m.title || m.id);
+  var face = document.createElement("div");
+  face.className = "face";
+  face.style.backgroundImage = "url('media/t/"+m.id+".jpeg')";
+  el.appendChild(face);
+  el.addEventListener("click", function(e){ e.stopPropagation(); openMedia(m); });
+  markers[m.id] = new maplibregl.Marker({element:el}).setLngLat([m.lon,m.lat]).addTo(map);
+  return markers[m.id];
+}
+
 function openMedia(m){
   clearAnom();
   clearMediaSel();
@@ -788,21 +825,23 @@ function openMedia(m){
   var i = media.indexOf(m);
   var rows = [];
   if(m.datetime) rows.push(["quando", fmtDate(m.datetime)]);
-  if(m.camera) rows.push(["câmera", esc(m.camera)]);
+  if(m.camera) rows.push(["câmera", m.camera]);
   if(m.heading!=null) rows.push(["olhando para", cardinal(m.heading)+" ("+Math.round(m.heading)+"°)"]);
   if(m.alt) rows.push(["altitude", Math.round(m.alt)+" m"]);
   rows.push(["onde", fmtCoord(m.lat,m.lon)]);
 
   panel.innerHTML =
     '<button class="close" aria-label="fechar">×</button>'+
-    '<figure><img src="media/'+m.file+'" alt="'+esc(m.title||m.id)+'"></figure>'+
+    '<figure><img src="media/'+esc(m.file)+'" alt="'+esc(m.title||m.id)+'"></figure>'+
     '<div class="body">'+
       (a ? '<p class="eyebrow"><button data-back="'+a.id+'">'+a.n+' · '+esc(a.short)+'</button></p>' : '')+
       (m.title ? '<h3>'+esc(m.title)+'</h3>' : '')+
       (a && a.place ? '<p class="place">'+esc(a.place)+'</p>' : '')+
       (m.text ? '<p class="story">'+esc(m.text)+'</p>' : '')+
+      /* every value is escaped here, at the one sink: fmtDate falls back to the raw
+         EXIF string when it does not parse, and that string comes from the photo. */
       '<table>'+rows.map(function(r){
-        return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join("")+'</table>'+
+        return '<tr><td>'+r[0]+'</td><td>'+esc(r[1])+'</td></tr>';}).join("")+'</table>'+
       '<nav><button data-mnav="-1">‹ anterior</button>'+
       '<span class="pos">'+(i+1)+' / '+media.length+'</span>'+
       '<button data-mnav="1">seguinte ›</button></nav>'+
@@ -832,6 +871,225 @@ function updateCount(){
   document.getElementById("brand-count").textContent =
     n ? n+" anomalias · "+f+" fotos" : "";
 }
+
+/* ---------------- enviar foto (editor) ---------------- */
+/* Same origin as the Ecótono editor, so the senha saved by /login.html is reused.
+   The original bytes go up untouched: any canvas re-encode would strip the GPS and
+   heading EXIF that the whole pipeline is built on. */
+var UP_MAX = 12*1024*1024;      /* original bytes. The server's JSON body cap is 32 MiB and
+                                   base64 inflates by 4/3, but a slow uplink meets
+                                   Cloudflare's ~100 s origin timeout long before that. */
+var UP_WARN = 5*1024*1024;
+var UP_OFFLINE = "servidor de edição indisponível — abra a página em www.ecotono.xyz.";
+var upFile = null, upStashed = null, upPlaceMode = false;
+
+function lsGet(k){ try{ return localStorage.getItem(k) || ""; }catch(e){ return ""; } }
+function token(){ return lsGet("ecotono-token"); }
+function setToken(t){ try{ localStorage.setItem("ecotono-token", t);
+                          localStorage.setItem("ecotono-auth", "1"); }catch(e){} }
+function clearToken(){ try{ localStorage.removeItem("ecotono-token");
+                            localStorage.removeItem("ecotono-auth"); }catch(e){} }
+function fmtMB(b){ return (b/1048576).toFixed(1).replace(".", ",")+" MB"; }
+function upErr(msg){ var e = document.getElementById("up-err"); if(e) e.textContent = msg || ""; }
+function upEl(id){ return document.getElementById(id); }
+
+/* Never rejects, never assumes JSON: an unrouted POST and the local http.server preview
+   both answer with an HTML body, so json === null is the "no edit server" signal. */
+function apiPost(path, body){
+  var h = {"Content-Type":"application/json"}, t = token();
+  if(t) h["X-Edit-Token"] = t;
+  return fetch(path, {method:"POST", headers:h, body:JSON.stringify(body)})
+    .then(function(r){
+      return r.text().then(function(txt){
+        var j = null; try{ j = JSON.parse(txt); }catch(e){}
+        return {status:r.status, json:j};
+      });
+    })
+    .catch(function(){ return {status:0, json:null}; });
+}
+
+/* XHR rather than fetch for this one call: fetch cannot report upload progress, and a
+   button frozen for 45 s on mobile data invites a re-tap. */
+function apiUpload(body, onProgress){
+  return new Promise(function(resolve){
+    var xhr = new XMLHttpRequest(), t = token();
+    xhr.open("POST", "/api/anomalias/upload");   /* absolute: the page lives under /anomalias/ */
+    xhr.setRequestHeader("Content-Type", "application/json");
+    if(t) xhr.setRequestHeader("X-Edit-Token", t);
+    xhr.upload.onprogress = function(e){ if(e.lengthComputable) onProgress(e.loaded, e.total); };
+    xhr.onload = function(){
+      var j = null; try{ j = JSON.parse(xhr.responseText); }catch(e){}
+      resolve({status:xhr.status, json:j});
+    };
+    xhr.onerror = xhr.ontimeout = xhr.onabort = function(){ resolve({status:0, json:null}); };
+    xhr.send(JSON.stringify(body));
+  });
+}
+
+function openUpload(){
+  clearAnom(); clearMediaSel();
+  upFile = null; upStashed = null; upPlaceMode = false;
+  var has = !!token();
+  panel.innerHTML =
+    '<button class="close" aria-label="fechar">×</button>'+
+    '<div class="body">'+
+      '<p class="eyebrow">enviar foto</p>'+
+      '<h3>uma foto nova no mapa</h3>'+
+      '<form class="up" novalidate>'+
+        '<figure class="prev" hidden><img id="up-prev" alt=""></figure>'+
+        '<label class="file">escolher foto<input type="file" accept="image/*" id="up-file"></label>'+
+        '<p class="hint" id="up-name">a posição vem do GPS da própria foto</p>'+
+        '<label for="up-title">título</label>'+
+        '<input type="text" id="up-title" maxlength="120">'+
+        '<label for="up-text">legenda</label>'+
+        '<textarea id="up-text" rows="3" maxlength="900"></textarea>'+
+        '<label for="up-anom">anomalia</label>'+
+        '<select id="up-anom"><option value="">automática (a mais próxima)</option>'+
+          anoms.map(function(a){
+            return '<option value="'+esc(a.id)+'">'+a.n+' · '+esc(a.short)+'</option>';
+          }).join("")+'</select>'+
+        '<label for="up-pass"'+(has?" hidden":"")+'>senha</label>'+
+        '<input type="password" id="up-pass" autocomplete="current-password"'+(has?" hidden":"")+'>'+
+        '<div class="geo" id="up-geo" hidden>'+
+          '<p>essa foto não tem GPS. usar o centro do mapa?</p>'+
+          '<label class="cb"><input type="checkbox" id="up-bearing" checked>'+
+            'usar a direção do mapa como olhar</label>'+
+        '</div>'+
+        '<p class="err" id="up-err" role="alert"></p>'+
+        '<button type="submit" class="send" id="up-send">enviar</button>'+
+      '</form>'+
+    '</div>';
+  panel.classList.add("on");
+  wirePanel();
+
+  upEl("up-file").addEventListener("change", function(){
+    var f = this.files && this.files[0];
+    upFile = f || null;
+    upStashed = null; upPlaceMode = false;          /* a new file voids any pending placement */
+    upEl("up-geo").hidden = true;
+    upEl("up-send").textContent = "enviar";
+    var fig = panel.querySelector(".prev");
+    if(!f){ upEl("up-name").textContent = "a posição vem do GPS da própria foto";
+            fig.hidden = true; upErr(""); return; }
+    upEl("up-name").textContent = f.name+" · "+fmtMB(f.size);
+    upEl("up-prev").src = URL.createObjectURL(f);
+    fig.hidden = false;
+    upErr(f.size > UP_MAX
+      ? "essa foto tem "+fmtMB(f.size)+" e o limite é "+fmtMB(UP_MAX)+"."
+      : (f.size > UP_WARN ? "atenção: "+fmtMB(f.size)+" pode demorar em rede móvel." : ""));
+  });
+  panel.querySelector("form.up").addEventListener("submit", function(e){
+    e.preventDefault(); submitUpload();
+  });
+}
+
+/* The senha doubles as the edit token. /api/login answers a wrong senha with 403 too,
+   so this branch must stay separate from the upload's own 403 handling. */
+function ensureToken(){
+  if(token()) return Promise.resolve(true);
+  var pass = (upEl("up-pass") || {}).value || "";
+  if(!pass){ upErr("digite a senha de edição."); return Promise.resolve(false); }
+  return apiPost("/api/login", {user:"admin", pass:pass}).then(function(r){
+    if(r.json === null){ upErr(UP_OFFLINE); return false; }
+    if(!r.json.ok){ upErr("senha incorreta."); return false; }
+    setToken(pass);
+    upEl("up-pass").hidden = true;
+    panel.querySelector('label[for="up-pass"]').hidden = true;
+    return true;
+  });
+}
+
+function readDataURL(f){
+  return new Promise(function(res, rej){
+    var r = new FileReader();
+    r.onload = function(){ res(r.result); };
+    r.onerror = function(){ rej(); };
+    r.readAsDataURL(f);
+  });
+}
+
+function submitUpload(){
+  var send = upEl("up-send");
+  if(!upFile && !upStashed){ upErr("escolha uma foto."); return; }
+  if(upFile && upFile.size > UP_MAX){
+    upErr("essa foto tem "+fmtMB(upFile.size)+" e o limite é "+fmtMB(UP_MAX)+"."); return; }
+
+  var body = {title: upEl("up-title").value,
+              text:  upEl("up-text").value,
+              anom:  upEl("up-anom").value};
+  if(upPlaceMode){
+    var c = map.getCenter();
+    body.lat = +c.lat.toFixed(6);
+    body.lon = +c.lng.toFixed(6);
+    if(upEl("up-bearing").checked)
+      body.heading = Math.round(((map.getBearing() % 360) + 360) % 360);
+  }
+  send.disabled = true; upErr("");
+
+  function done(){ send.disabled = false; send.textContent = upPlaceMode ? "posicionar aqui e enviar" : "enviar"; }
+
+  ensureToken().then(function(ok){
+    if(!ok){ done(); return; }
+    send.textContent = "enviando…";
+    /* a no-gps retry sends only the reference: the server already stashed the bytes */
+    var prep = upStashed ? Promise.resolve(null) : readDataURL(upFile);
+    return prep.then(function(dataUrl){
+      if(upStashed) body.src = upStashed; else body.image = dataUrl;
+      return apiUpload(body, function(loaded, total){
+        send.textContent = "enviando "+fmtMB(loaded)+" / "+fmtMB(total);
+      });
+    }).then(function(r){ handleUpload(r); done(); });
+  }).catch(function(){ upErr("não foi possível ler o arquivo."); done(); });
+}
+
+function handleUpload(r){
+  var j = r.json;
+  if(j === null){ upErr(UP_OFFLINE); return; }
+  if(r.status === 200 && j.ok){ upDone(j.item); return; }
+  if(r.status === 403){
+    clearToken();
+    upEl("up-pass").hidden = false;
+    panel.querySelector('label[for="up-pass"]').hidden = false;
+    upErr("senha inválida ou expirada — entre de novo.");
+    return;
+  }
+  if(r.status === 413){ upErr("foto grande demais para o servidor."); return; }
+  var code = j.error || "";
+  /* a retry after a dropped connection lands here: the photo did go up. */
+  if(code === "duplicate"){ upDone(j.item); return; }
+  if(code === "no-gps"){
+    upStashed = j.src || null;
+    upPlaceMode = true;
+    upEl("up-geo").hidden = false;
+    upEl("up-send").textContent = "posicionar aqui e enviar";
+    upErr("sem GPS na foto. enquadre o lugar no mapa e confirme.");
+    return;
+  }
+  if(code === "no-anom"){
+    var sel = upEl("up-anom");
+    if(j.nearest && j.nearest.length) sel.value = j.nearest[0];
+    sel.focus();
+    upErr(j.message || "nenhuma anomalia por perto — escolha uma.");
+    return;
+  }
+  upErr(j.message || ("erro do servidor ("+(code || r.status)+")"));
+}
+
+function upDone(it){
+  var local = null;
+  for(var i=0; i<media.length; i++) if(media[i].id === it.id){ local = media[i]; break; }
+  if(!local){
+    media.push(it);
+    media.sort(function(a,b){ return (a.datetime||"") < (b.datetime||"") ? -1 : 1; });
+    if(!mediaOn) setMedia(true);
+    addMediaMarker(it);
+    refreshCones(); declutter(); updateCount();
+    local = it;
+  }
+  openMedia(local);        /* replaces the form and flies to the new marker */
+}
+
+document.getElementById("addphoto").onclick = openUpload;
 
 /* ---------------- tamanho dos marcadores por zoom ---------------- */
 function mkSizeForZoom(z){
@@ -919,7 +1177,10 @@ map.on("moveend", declutter);
 });
 map.on("click", function(e){
   if(e.originalEvent._handled) return;
-  if(panel.classList.contains("on") && !selMedia) closePanel();
+  /* never close the upload form by clicking the map: placing a photo by hand means
+     panning around, and a stray click would discard the fields and the pending upload */
+  if(panel.classList.contains("on") && !selMedia && !panel.querySelector("form.up"))
+    closePanel();
 });
 
 /* ---------------- mapa: um só de cada vez ---------------- */
