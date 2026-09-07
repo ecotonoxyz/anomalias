@@ -372,5 +372,39 @@
   "h": 3380,
   "title": "",
   "text": ""
+ },
+ {
+  "id": "poligono-20260905-1301",
+  "src": "up-6a583ca49aad4445",
+  "file": "poligono-20260905-1301.jpeg",
+  "anom": "poligono",
+  "lat": -23.556767,
+  "lon": -46.40015,
+  "alt": 814.7,
+  "heading": 189.2,
+  "hfov": 26.3,
+  "datetime": "2026:09:05 13:01:23",
+  "camera": "iPhone 13 Pro",
+  "w": 2701,
+  "h": 1673,
+  "title": "",
+  "text": ""
+ },
+ {
+  "id": "poligono-20260905-1316",
+  "src": "up-b244965f899b2436",
+  "file": "poligono-20260905-1316.jpeg",
+  "anom": "poligono",
+  "lat": -23.555053,
+  "lon": -46.391278,
+  "alt": 814.1,
+  "heading": null,
+  "hfov": 6.9,
+  "datetime": "2026:09:05 13:16:04",
+  "camera": "COOLPIX P900",
+  "w": 4608,
+  "h": 3456,
+  "title": "",
+  "text": ""
  }
 ]
