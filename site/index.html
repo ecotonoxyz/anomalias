@@ -146,6 +146,34 @@ body.intro-open #index{display:none}
 #panel .actions button[aria-pressed="true"]{border-color:var(--sepia);color:var(--sepia)}
 #panel .actions button:disabled{opacity:.35;cursor:default}
 
+/* ---------- foto em tela cheia ---------- */
+/* above #about (60) so Escape and clicks resolve in the order the reader expects */
+#lightbox{position:absolute;inset:0;z-index:70;display:none;
+  background:rgba(6,4,9,.95);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;padding:clamp(8px,2vw,28px)}
+#lightbox.on{display:flex}
+#lightbox img{max-width:100%;max-height:100%;object-fit:contain;display:block;cursor:zoom-in}
+/* zoomed: show the file at its own size and let the overlay scroll */
+#lightbox.zoom{overflow:auto;align-items:flex-start;justify-content:flex-start;padding:0}
+#lightbox.zoom img{max-width:none;max-height:none;cursor:zoom-out}
+#lightbox .lbclose{position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;z-index:2;
+  width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+  background:rgba(10,6,12,.72);color:#fff;font-size:19px;line-height:1;cursor:pointer}
+#lightbox .lbclose:hover{background:var(--pink);border-color:var(--pink)}
+#lightbox .lbcap{position:absolute;left:0;right:0;bottom:0;margin:0;pointer-events:none;
+  padding:28px 18px max(14px,env(safe-area-inset-bottom));text-align:center;
+  font:600 13px var(--display);color:var(--muted);
+  background:linear-gradient(transparent,rgba(6,4,9,.85))}
+#lightbox .lbcap:empty{display:none}
+/* the expand affordance, sitting on the photo in the card */
+#panel figure{position:relative}
+#panel .expand{position:absolute;right:9px;bottom:9px;z-index:2;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  border-radius:9px;border:1px solid var(--line);background:rgba(10,6,12,.6);
+  color:#fff;cursor:pointer;padding:0}
+#panel .expand:hover{background:var(--pink);border-color:var(--pink)}
+#panel figure img{cursor:zoom-in}
+
 /* ---------- upload form (inside the panel) ---------- */
 #panel form.up{display:block;margin-top:2px}
 /* an explicit rule: the label/input styles below would otherwise beat the UA's [hidden] */
@@ -291,6 +319,12 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
 </div>
 
 <aside id="panel" aria-live="polite"></aside>
+
+<div id="lightbox" aria-hidden="true">
+  <img alt="">
+  <button class="lbclose" aria-label="fechar">×</button>
+  <p class="lbcap"></p>
+</div>
 
 <div id="intro" class="veil">
   <h1>NOVAS E ANTIGAS<br>ANOMALIAS<small>do Sítio Urbano de São Paulo</small></h1>
@@ -764,12 +798,17 @@ function wirePanel(){
       if(v[0]==="b") setBase(v[1]);
     };
   });
+  var exp = panel.querySelector(".expand");
+  if(exp) exp.onclick = function(){ openLightbox(selMedia); };
+  var fig = panel.querySelector("figure img");
+  if(fig && selMedia) fig.onclick = function(){ openLightbox(selMedia); };
   var back = panel.querySelector("[data-back]");
   if(back) back.onclick = function(){ openAnom(anomById[back.getAttribute("data-back")], {keepBearing:true}); };
   panel.scrollTop = 0;
 }
 
 function closePanel(){
+  closeLightbox();
   panel.classList.remove("on");
   clearMediaSel();
   clearAnom();
@@ -799,6 +838,29 @@ fetch("data/media.json").then(function(r){return r.json()}).then(function(items)
 
 /* hoisted on purpose: the media.json callback above runs before the rest of this
    script has been evaluated, and an upload needs the same builder afterwards. */
+/* ---------------- foto em tela cheia ---------------- */
+var lightbox = document.getElementById("lightbox");
+function lightboxOn(){ return lightbox.classList.contains("on"); }
+function openLightbox(m){
+  if(!m) return;
+  var img = lightbox.querySelector("img");
+  img.src = "media/" + m.file;                 /* set as a property: no markup, nothing to escape */
+  img.alt = m.title || m.id;
+  lightbox.querySelector(".lbcap").textContent = m.title || "";
+  lightbox.classList.remove("zoom");
+  lightbox.classList.add("on");
+  lightbox.setAttribute("aria-hidden", "false");
+  lightbox.querySelector(".lbclose").focus();
+}
+function closeLightbox(){
+  lightbox.classList.remove("on", "zoom");
+  lightbox.setAttribute("aria-hidden", "true");
+}
+lightbox.addEventListener("click", function(e){
+  if(e.target === lightbox || e.target.closest(".lbclose")) closeLightbox();
+  else if(e.target.tagName === "IMG") lightbox.classList.toggle("zoom");   /* zoom to 1:1 */
+});
+
 function addMediaMarker(m){
   var el = document.createElement("div");
   el.className = "mk";
@@ -832,7 +894,12 @@ function openMedia(m){
 
   panel.innerHTML =
     '<button class="close" aria-label="fechar">×</button>'+
-    '<figure><img src="media/'+esc(m.file)+'" alt="'+esc(m.title||m.id)+'"></figure>'+
+    '<figure><img src="media/'+esc(m.file)+'" alt="'+esc(m.title||m.id)+'">'+
+      '<button class="expand" aria-label="ver a foto em tela cheia" title="tela cheia">'+
+        '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">'+
+        '<path d="M6 1H1v5M10 15h5v-5M1 10v5h5M15 6V1h-5" fill="none" stroke="currentColor" '+
+        'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+      '</button></figure>'+
     '<div class="body">'+
       (a ? '<p class="eyebrow"><button data-back="'+a.id+'">'+a.n+' · '+esc(a.short)+'</button></p>' : '')+
       (m.title ? '<h3>'+esc(m.title)+'</h3>' : '')+
@@ -848,6 +915,8 @@ function openMedia(m){
     '</div>';
   panel.classList.add("on");
   wirePanel();
+
+  if(lightboxOn()) openLightbox(m);      /* ←/→ page through photos while full screen */
 
   fly({center:[m.lon,m.lat], zoom:Math.max(15.3, Math.min(map.getZoom(), 16.5)), pitch:58,
        bearing:(m.heading!=null ? m.heading : map.getBearing()),
@@ -1313,7 +1382,8 @@ about.addEventListener("click", function(e){ if(e.target===about) about.classLis
 
 document.addEventListener("keydown", function(e){
   if(e.key==="Escape"){
-    if(about.classList.contains("on")) about.classList.remove("on");
+    if(lightboxOn()) closeLightbox();
+    else if(about.classList.contains("on")) about.classList.remove("on");
     else if(panel.classList.contains("on")) closePanel();
   }else if(panel.classList.contains("on") && (e.key==="ArrowLeft" || e.key==="ArrowRight")){
     var d = e.key==="ArrowRight" ? 1 : -1;
