@@ -259,13 +259,28 @@ def build_media():
     if mj.exists():
         old = {m["src"]: m for m in json.loads(mj.read_text())}
 
+    # Photos deleted through the page (POST /api/anomalias/delete). Their originals may
+    # still be sitting in images/raw, so without this a rebuild would put them straight
+    # back. Delete the entry here to un-delete a photo.
+    rm = DATA / "removed.json"
+    removed = set(json.loads(rm.read_text())) if rm.exists() else set()
+
     items, used_ids = [], set()
     for meta in raw:
         src = Path(meta["SourceFile"])
+        if src.stem in removed:
+            print(f"  -- {src.name}: apagada pela página, ignorada")
+            continue
         prev = old.get(src.stem, {})    # bound before the GPS test: a photo uploaded through
                                         # the page and placed by hand has no GPS in its EXIF,
                                         # only a position in media.json
+        # Fields changed through the page are listed in the entry's "edited" array and
+        # win over the file: the whole point of editing a position or a lens angle is
+        # that the EXIF was wrong or absent.
+        edited = set(prev.get("edited") or [])
         lat, lon = meta.get("GPSLatitude"), meta.get("GPSLongitude")
+        if "lat" in edited and "lon" in edited:
+            lat, lon = prev.get("lat"), prev.get("lon")
         if lat is None or lon is None:
             lat, lon = prev.get("lat"), prev.get("lon")
         if lat is None or lon is None:
@@ -307,8 +322,10 @@ def build_media():
 
         wpx, hpx = im.width, im.height
         heading = meta.get("GPSImgDirection")
-        if heading is None:             # same reason as lat/lon above (alt needs no fallback:
-            heading = prev.get("heading")   # a photo with no GPS IFD has none on either side)
+        if "heading" in edited:         # includes a deliberate null, which removes the cone
+            heading = prev.get("heading")
+        elif heading is None:           # (alt needs no fallback: a photo with no GPS IFD
+            heading = prev.get("heading")   #  has no altitude on either side)
         alt = meta.get("GPSAltitude")
         items.append({
             "id": mid, "src": src.stem, "file": web.name,
@@ -316,7 +333,8 @@ def build_media():
             "lat": round(lat, 6), "lon": round(lon, 6),
             "alt": round(alt, 1) if alt else None,
             "heading": round(heading, 1) if heading is not None else None,
-            "hfov": hfov_deg(meta.get("FocalLength35efl"), wpx, hpx),
+            "hfov": (prev.get("hfov") if "hfov" in edited
+                     else hfov_deg(meta.get("FocalLength35efl"), wpx, hpx)),
             "datetime": dt or None,
             "camera": meta.get("Model"),
             "w": wpx, "h": hpx,
@@ -324,13 +342,15 @@ def build_media():
             "title": prev.get("title", ""),
             "text": prev.get("text", ""),
         })
+        if edited:
+            items[-1]["edited"] = sorted(edited)
 
     # media.json is rewritten from whatever is in images/raw, and photos uploaded through
     # the page are git-ignored (they live in the bucket). A rebuild run before pulling them
     # would therefore delete published photos from the site. Refuse by default: the entries
     # are recoverable from the bucket, a deployed media.json is not.
     seen = {m["src"] for m in items}
-    lost = sorted(s for s in old if s not in seen)
+    lost = sorted(s for s in old if s not in seen and s not in removed)
     if lost and not ALLOW_DROP:
         raise SystemExit(
             f"  !! {len(lost)} entries in media.json have no source in {IMAGES}:\n"

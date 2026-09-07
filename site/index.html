@@ -146,7 +146,7 @@ body.intro-open #index{display:none}
 #panel .actions button[aria-pressed="true"]{border-color:var(--sepia);color:var(--sepia)}
 #panel .actions button:disabled{opacity:.35;cursor:default}
 
-/* ---------- foto em tela cheia ---------- */
+/* ---------- imagem em tela cheia ---------- */
 /* above #about (60) so Escape and clicks resolve in the order the reader expects */
 #lightbox{position:absolute;inset:0;z-index:70;display:none;
   background:rgba(6,4,9,.95);backdrop-filter:blur(3px);
@@ -199,6 +199,16 @@ body.intro-open #index{display:none}
 #panel form.up .geo label.cb{margin:0;color:var(--amber);font:600 12.5px var(--display);
   letter-spacing:0;text-transform:none}
 #panel form.up .geo label.cb input{width:auto;margin-right:6px}
+#panel form.up input[type=range]{width:100%;padding:0;border:0;background:none;
+  accent-color:var(--pink)}
+#panel form.up .actions{margin-top:8px}
+#panel form.up label b{float:right;font:600 12px var(--mono);color:var(--muted);
+  text-transform:none;letter-spacing:0}
+/* editor row on the photo card */
+#panel .actions.ed{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+#panel .actions.ed button[data-ed="del"]{color:var(--faint)}
+#panel .actions.ed button[data-ed="del"]:hover,
+#panel .actions.ed button[data-armed="1"]{border-color:var(--pink);color:var(--pink)}
 #panel form.up .err{margin:11px 0 0;min-height:1em;font:600 12.5px/1.4 var(--display);color:var(--pink)}
 #panel form.up .send{margin-top:14px;width:100%;padding:11px;border:1px solid var(--line);
   border-radius:99px;background:none;color:#fff;font:700 13.5px var(--display);cursor:pointer}
@@ -297,8 +307,8 @@ body.intro-open .mk{visibility:hidden;pointer-events:none}
   <button data-b="igc" data-hist role="radio" aria-pressed="false" title="folhas topográficas IGC-SP, 1895–1920">1895–1920</button>
   <button data-b="sara" data-hist role="radio" aria-pressed="false" title="mapeamento SARA Brasil, 1930">1930</button>
   <i class="sep" aria-hidden="true"></i>
-  <button id="mediatoggle" aria-pressed="true" title="fotos no mapa">fotos</button>
-  <button id="addphoto" role="button" title="enviar uma foto (precisa da senha de edição)">+ foto</button>
+  <button id="mediatoggle" aria-pressed="true" title="imagens no mapa">imagens</button>
+  <button id="addphoto" role="button" title="enviar uma imagem (precisa da senha de edição)">+ imagem</button>
 </div>
 
 <div id="camctl" role="group" aria-label="controles da câmera">
@@ -740,7 +750,7 @@ function openAnom(a, opts){
         return '<button data-m="'+esc(m.id)+'" title="'+esc(m.title||m.id)+'" '+
           'style="background-image:url(&quot;media/t/'+esc(m.id)+'.jpeg&quot;)" aria-label="'+esc(m.title||m.id)+'"></button>';
       }).join("")
-    : '<span class="none">ainda sem fotos — em breve</span>';
+    : '<span class="none">ainda sem imagens — em breve</span>';
   var inSara = a.lon > -46.862 && a.lon < -46.328 && a.lat > -23.691 && a.lat < -23.343;
 
   panel.innerHTML =
@@ -798,6 +808,12 @@ function wirePanel(){
       if(v[0]==="b") setBase(v[1]);
     };
   });
+  panel.querySelectorAll("[data-ed]").forEach(function(b){
+    b.onclick = function(){
+      if(b.getAttribute("data-ed") === "edit") openEdit(selMedia);
+      else confirmDelete(b, selMedia);
+    };
+  });
   var exp = panel.querySelector(".expand");
   if(exp) exp.onclick = function(){ openLightbox(selMedia); };
   var fig = panel.querySelector("figure img");
@@ -816,6 +832,24 @@ function closePanel(){
 }
 
 /* ---------------- fotos ---------------- */
+/* Reading order: by anomaly, in the order of the left-hand index, then chronologically
+   within each one. ←/→ (and the card's anterior/seguinte, and paging in tela cheia) all
+   walk this array, so they finish one anomaly before moving to the next instead of
+   hopping across the city by date. Needs anomById, so it is applied once the anomalias
+   have loaded, not at the moment media.json arrives. */
+function anomRank(m){
+  var a = anomById[m.anom];
+  return a ? a.n : 1e9;             /* a photo attached to nothing sorts last */
+}
+function sortMedia(){
+  media.sort(function(a,b){
+    var d = anomRank(a) - anomRank(b);
+    if(d) return d;
+    var x = a.datetime || "", y = b.datetime || "";
+    return x < y ? -1 : (x > y ? 1 : 0);
+  });
+}
+
 fetch("data/media.json").then(function(r){return r.json()}).then(function(items){
   items.sort(function(a,b){ return (a.datetime||"") < (b.datetime||"") ? -1 : 1; });
   media = items;
@@ -825,6 +859,8 @@ fetch("data/media.json").then(function(r){return r.json()}).then(function(items)
   declutter();
   return anomsReady;
 }).then(function(){
+  sortMedia();            /* anomalias are in now, so the reading order can be applied */
+
   /* deep links */
   var h = location.hash.match(/^#m\/(.+)$/);
   if(h){
@@ -838,7 +874,7 @@ fetch("data/media.json").then(function(r){return r.json()}).then(function(items)
 
 /* hoisted on purpose: the media.json callback above runs before the rest of this
    script has been evaluated, and an upload needs the same builder afterwards. */
-/* ---------------- foto em tela cheia ---------------- */
+/* ---------------- imagem em tela cheia ---------------- */
 var lightbox = document.getElementById("lightbox");
 function lightboxOn(){ return lightbox.classList.contains("on"); }
 function openLightbox(m){
@@ -895,7 +931,7 @@ function openMedia(m){
   panel.innerHTML =
     '<button class="close" aria-label="fechar">×</button>'+
     '<figure><img src="media/'+esc(m.file)+'" alt="'+esc(m.title||m.id)+'">'+
-      '<button class="expand" aria-label="ver a foto em tela cheia" title="tela cheia">'+
+      '<button class="expand" aria-label="ver a imagem em tela cheia" title="tela cheia">'+
         '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">'+
         '<path d="M6 1H1v5M10 15h5v-5M1 10v5h5M15 6V1h-5" fill="none" stroke="currentColor" '+
         'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
@@ -909,6 +945,10 @@ function openMedia(m){
          EXIF string when it does not parse, and that string comes from the photo. */
       '<table>'+rows.map(function(r){
         return '<tr><td>'+r[0]+'</td><td>'+esc(r[1])+'</td></tr>';}).join("")+'</table>'+
+      (token() ? '<div class="actions ed">'+
+          '<button data-ed="edit">editar</button>'+
+          '<button data-ed="del">apagar</button>'+
+        '</div>' : '')+
       '<nav><button data-mnav="-1">‹ anterior</button>'+
       '<span class="pos">'+(i+1)+' / '+media.length+'</span>'+
       '<button data-mnav="1">seguinte ›</button></nav>'+
@@ -938,10 +978,134 @@ document.getElementById("mediatoggle").onclick = function(){ setMedia(!mediaOn);
 function updateCount(){
   var n = anoms.length, f = media.length;
   document.getElementById("brand-count").textContent =
-    n ? n+" anomalias · "+f+" fotos" : "";
+    n ? n+" anomalias · "+f+" imagens" : "";
 }
 
-/* ---------------- enviar foto (editor) ---------------- */
+/* ---------------- editar / apagar uma imagem ---------------- */
+var edPend = null;      /* only the fields actually touched are sent */
+
+function edCoord(m){ return fmtCoord(edPend.lat != null ? edPend.lat : m.lat,
+                                     edPend.lon != null ? edPend.lon : m.lon); }
+function edHead(m){
+  var h = ("heading" in edPend) ? edPend.heading : m.heading;
+  return h == null ? "sem direção (sem cone)" : cardinal(h)+" ("+Math.round(h)+"°)";
+}
+
+function openEdit(m){
+  if(!m) return;
+  edPend = {};
+  var fov = m.hfov || 58;
+  panel.innerHTML =
+    '<button class="close" aria-label="fechar">×</button>'+
+    '<div class="body">'+
+      '<p class="eyebrow">editar imagem</p>'+
+      '<h3>'+esc(m.title || m.id)+'</h3>'+
+      '<form class="up ed" novalidate>'+
+        '<label for="ed-title">título</label>'+
+        '<input type="text" id="ed-title" maxlength="120" value="'+esc(m.title||"")+'">'+
+        '<label for="ed-text">legenda</label>'+
+        '<textarea id="ed-text" rows="3" maxlength="900">'+esc(m.text||"")+'</textarea>'+
+        '<label for="ed-anom">anomalia</label>'+
+        '<select id="ed-anom">'+anoms.map(function(a){
+            return '<option value="'+esc(a.id)+'"'+(a.id===m.anom?" selected":"")+'>'+
+                   a.n+' · '+esc(a.short)+'</option>'; }).join("")+'</select>'+
+        '<label>posição</label>'+
+        '<p class="hint" id="ed-pos">'+edCoord(m)+'</p>'+
+        '<div class="actions"><button type="button" data-set="pos">usar o centro do mapa</button></div>'+
+        '<label>olhando para</label>'+
+        '<p class="hint" id="ed-head">'+edHead(m)+'</p>'+
+        '<div class="actions">'+
+          '<button type="button" data-set="head">usar a direção do mapa</button>'+
+          '<button type="button" data-set="nohead">remover</button>'+
+        '</div>'+
+        '<label for="ed-fov">abertura da lente <b id="ed-fovv">'+fmtFov(fov)+'</b></label>'+
+        '<input type="range" id="ed-fov" min="5" max="170" step="0.5" value="'+fov+'">'+
+        '<p class="err" id="ed-err" role="alert"></p>'+
+        '<button type="submit" class="send" id="ed-save">salvar</button>'+
+      '</form>'+
+    '</div>';
+  panel.classList.add("on");
+  wirePanel();
+
+  panel.querySelectorAll("[data-set]").forEach(function(b){
+    b.onclick = function(){
+      var k = b.getAttribute("data-set"), c;
+      if(k === "pos"){ c = map.getCenter();
+        edPend.lat = +c.lat.toFixed(6); edPend.lon = +c.lng.toFixed(6);
+        upEl("ed-pos").textContent = edCoord(m); }
+      else if(k === "head"){ edPend.heading = Math.round(((map.getBearing()%360)+360)%360);
+        upEl("ed-head").textContent = edHead(m); }
+      else { edPend.heading = null; upEl("ed-head").textContent = edHead(m); }
+    };
+  });
+  upEl("ed-fov").addEventListener("input", function(){
+    edPend.hfov = parseFloat(this.value);
+    upEl("ed-fovv").textContent = fmtFov(edPend.hfov);
+  });
+  panel.querySelector("form.ed").addEventListener("submit", function(e){
+    e.preventDefault(); saveEdit(m);
+  });
+}
+function fmtFov(v){ return (Math.round(v*10)/10).toFixed(1).replace(".", ",")+"°"; }
+
+function saveEdit(m){
+  var save = upEl("ed-save");
+  var body = {id: m.id,
+              title: upEl("ed-title").value,
+              text:  upEl("ed-text").value,
+              anom:  upEl("ed-anom").value};
+  for(var k in edPend) body[k] = edPend[k];
+  save.disabled = true; save.textContent = "salvando…";
+  apiPost("/api/anomalias/edit", body).then(function(r){
+    save.disabled = false; save.textContent = "salvar";
+    if(r.json === null){ edErr(UP_OFFLINE); return; }
+    if(r.status === 403){ clearToken(); edErr("senha expirada — recarregue a página."); return; }
+    if(!(r.status === 200 && r.json.ok)){ edErr(r.json.message || "não foi possível salvar."); return; }
+    applyEdited(m.id, r.json.item, !!r.json.renamed);
+  });
+}
+function edErr(msg){ var e = upEl("ed-err"); if(e) e.textContent = msg || ""; }
+
+/* An anomaly change renames the photo (its id is anomaly + timestamp), so the old marker
+   has to go and a new one take its place under the new key. */
+function applyEdited(oldId, item, renamed){
+  var i = -1;
+  for(var k = 0; k < media.length; k++) if(media[k].id === oldId){ i = k; break; }
+  if(i >= 0) media[i] = item; else media.push(item);
+  if(renamed && markers[oldId]){ markers[oldId].remove(); delete markers[oldId]; }
+  if(markers[item.id]) markers[item.id].setLngLat([item.lon, item.lat]);
+  else addMediaMarker(item);
+  sortMedia(); refreshCones(); declutter(); updateCount();
+  openMedia(item);
+}
+
+/* Two taps rather than a browser confirm(): the panel is the whole interface here. */
+function confirmDelete(btn, m){
+  if(!m) return;
+  if(btn.getAttribute("data-armed") !== "1"){
+    btn.setAttribute("data-armed", "1");
+    btn.textContent = "apagar mesmo?";
+    setTimeout(function(){
+      if(btn.isConnected){ btn.removeAttribute("data-armed"); btn.textContent = "apagar"; }
+    }, 4000);
+    return;
+  }
+  btn.disabled = true; btn.textContent = "apagando…";
+  apiPost("/api/anomalias/delete", {id: m.id}).then(function(r){
+    if(r.json === null || !(r.status === 200 && r.json.ok)){
+      btn.disabled = false; btn.removeAttribute("data-armed"); btn.textContent = "apagar";
+      alert(r.json && r.json.message ? r.json.message : UP_OFFLINE);
+      return;
+    }
+    if(markers[m.id]){ markers[m.id].remove(); delete markers[m.id]; }
+    for(var k = 0; k < media.length; k++) if(media[k].id === m.id){ media.splice(k, 1); break; }
+    selMedia = null;
+    refreshCones(); declutter(); updateCount();
+    closePanel();
+  });
+}
+
+/* ---------------- enviar imagem (editor) ---------------- */
 /* Same origin as the Ecótono editor, so the senha saved by /login.html is reused.
    The original bytes go up untouched: any canvas re-encode would strip the GPS and
    heading EXIF that the whole pipeline is built on. */
@@ -1002,12 +1166,12 @@ function openUpload(){
   panel.innerHTML =
     '<button class="close" aria-label="fechar">×</button>'+
     '<div class="body">'+
-      '<p class="eyebrow">enviar foto</p>'+
-      '<h3>uma foto nova no mapa</h3>'+
+      '<p class="eyebrow">enviar imagem</p>'+
+      '<h3>uma imagem nova no mapa</h3>'+
       '<form class="up" novalidate>'+
         '<figure class="prev" hidden><img id="up-prev" alt=""></figure>'+
-        '<label class="file">escolher foto<input type="file" accept="image/*" id="up-file"></label>'+
-        '<p class="hint" id="up-name">a posição vem do GPS da própria foto</p>'+
+        '<label class="file">escolher imagem<input type="file" accept="image/*" id="up-file"></label>'+
+        '<p class="hint" id="up-name">a posição vem do GPS da própria imagem</p>'+
         '<label for="up-title">título</label>'+
         '<input type="text" id="up-title" maxlength="120">'+
         '<label for="up-text">legenda</label>'+
@@ -1020,7 +1184,7 @@ function openUpload(){
         '<label for="up-pass"'+(has?" hidden":"")+'>senha</label>'+
         '<input type="password" id="up-pass" autocomplete="current-password"'+(has?" hidden":"")+'>'+
         '<div class="geo" id="up-geo" hidden>'+
-          '<p>essa foto não tem GPS. usar o centro do mapa?</p>'+
+          '<p>essa imagem não tem GPS. usar o centro do mapa?</p>'+
           '<label class="cb"><input type="checkbox" id="up-bearing" checked>'+
             'usar a direção do mapa como olhar</label>'+
         '</div>'+
@@ -1038,13 +1202,13 @@ function openUpload(){
     upEl("up-geo").hidden = true;
     upEl("up-send").textContent = "enviar";
     var fig = panel.querySelector(".prev");
-    if(!f){ upEl("up-name").textContent = "a posição vem do GPS da própria foto";
+    if(!f){ upEl("up-name").textContent = "a posição vem do GPS da própria imagem";
             fig.hidden = true; upErr(""); return; }
     upEl("up-name").textContent = f.name+" · "+fmtMB(f.size);
     upEl("up-prev").src = URL.createObjectURL(f);
     fig.hidden = false;
     upErr(f.size > UP_MAX
-      ? "essa foto tem "+fmtMB(f.size)+" e o limite é "+fmtMB(UP_MAX)+"."
+      ? "essa imagem tem "+fmtMB(f.size)+" e o limite é "+fmtMB(UP_MAX)+"."
       : (f.size > UP_WARN ? "atenção: "+fmtMB(f.size)+" pode demorar em rede móvel." : ""));
   });
   panel.querySelector("form.up").addEventListener("submit", function(e){
@@ -1079,9 +1243,9 @@ function readDataURL(f){
 
 function submitUpload(){
   var send = upEl("up-send");
-  if(!upFile && !upStashed){ upErr("escolha uma foto."); return; }
+  if(!upFile && !upStashed){ upErr("escolha uma imagem."); return; }
   if(upFile && upFile.size > UP_MAX){
-    upErr("essa foto tem "+fmtMB(upFile.size)+" e o limite é "+fmtMB(UP_MAX)+"."); return; }
+    upErr("essa imagem tem "+fmtMB(upFile.size)+" e o limite é "+fmtMB(UP_MAX)+"."); return; }
 
   var body = {title: upEl("up-title").value,
               text:  upEl("up-text").value,
@@ -1122,7 +1286,7 @@ function handleUpload(r){
     upErr("senha inválida ou expirada — entre de novo.");
     return;
   }
-  if(r.status === 413){ upErr("foto grande demais para o servidor."); return; }
+  if(r.status === 413){ upErr("imagem grande demais para o servidor."); return; }
   var code = j.error || "";
   /* a retry after a dropped connection lands here: the photo did go up. */
   if(code === "duplicate"){ upDone(j.item); return; }
@@ -1131,7 +1295,7 @@ function handleUpload(r){
     upPlaceMode = true;
     upEl("up-geo").hidden = false;
     upEl("up-send").textContent = "posicionar aqui e enviar";
-    upErr("sem GPS na foto. enquadre o lugar no mapa e confirme.");
+    upErr("sem GPS na imagem. enquadre o lugar no mapa e confirme.");
     return;
   }
   if(code === "no-anom"){
@@ -1149,7 +1313,7 @@ function upDone(it){
   for(var i=0; i<media.length; i++) if(media[i].id === it.id){ local = media[i]; break; }
   if(!local){
     media.push(it);
-    media.sort(function(a,b){ return (a.datetime||"") < (b.datetime||"") ? -1 : 1; });
+    sortMedia();          /* drop the new photo in beside the others of its anomaly */
     if(!mediaOn) setMedia(true);
     addMediaMarker(it);
     refreshCones(); declutter(); updateCount();
