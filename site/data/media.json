@@ -24,14 +24,17 @@
   "lat": -23.685269,
   "lon": -46.697569,
   "alt": null,
-  "heading": null,
+  "heading": 148.0,
   "hfov": 53.1,
   "datetime": "2025:04:27 17:22:46",
   "camera": "DSC-RX100M6",
   "w": 1086,
   "h": 724,
   "title": "Pinheiros ao entardecer",
-  "text": ""
+  "text": "",
+  "edited": [
+   "heading"
+  ]
  },
  {
   "id": "braco-20250506-2153",
@@ -160,14 +163,17 @@
   "lat": -23.701039,
   "lon": -46.685231,
   "alt": 733.5,
-  "heading": null,
+  "heading": 340.0,
   "hfov": 57.2,
   "datetime": "2025:09:14 15:37:46",
   "camera": "COOLPIX P900",
   "w": 1024,
   "h": 768,
   "title": "A colina, do outro lado do rio",
-  "text": ""
+  "text": "",
+  "edited": [
+   "heading"
+  ]
  },
  {
   "id": "cratera-20250921-1022",
@@ -194,14 +200,17 @@
   "lat": -23.867844,
   "lon": -46.692647,
   "alt": 777.5,
-  "heading": null,
+  "heading": 287.0,
   "hfov": 33.4,
   "datetime": "2025:09:21 11:29:46",
   "camera": "COOLPIX P900",
   "w": 1024,
   "h": 768,
   "title": "O brejo no fundo da cratera",
-  "text": ""
+  "text": "",
+  "edited": [
+   "heading"
+  ]
  },
  {
   "id": "cratera-20250921-1438",
@@ -211,14 +220,17 @@
   "lat": -23.877547,
   "lon": -46.724936,
   "alt": 874.7,
-  "heading": null,
+  "heading": 53.0,
   "hfov": 12.1,
   "datetime": "2025:09:21 14:38:09",
   "camera": "COOLPIX P900",
   "w": 1024,
   "h": 768,
   "title": "Da borda, sobre o bairro na cratera",
-  "text": ""
+  "text": "",
+  "edited": [
+   "heading"
+  ]
  },
  {
   "id": "poligono-20251221-1825",
@@ -330,14 +342,17 @@
   "lat": -23.612492,
   "lon": -46.394889,
   "alt": 899.6,
-  "heading": null,
+  "heading": 87.0,
   "hfov": 25.4,
   "datetime": "2026:09:05 10:32:35",
   "camera": "COOLPIX P900",
   "w": 4608,
   "h": 3456,
   "title": "",
-  "text": ""
+  "text": "",
+  "edited": [
+   "heading"
+  ]
  },
  {
   "id": "poligono-20260905-1126",
@@ -364,14 +379,17 @@
   "lat": -23.557911,
   "lon": -46.410119,
   "alt": 782.9,
-  "heading": null,
+  "heading": 167.0,
   "hfov": 5.9,
   "datetime": "2026:09:05 12:52:29",
   "camera": "COOLPIX P900",
   "w": 4508,
   "h": 3380,
   "title": "",
-  "text": ""
+  "text": "",
+  "edited": [
+   "heading"
+  ]
  },
  {
   "id": "poligono-20260905-1301",
@@ -398,13 +416,16 @@
   "lat": -23.555053,
   "lon": -46.391278,
   "alt": 814.1,
-  "heading": null,
+  "heading": 168.0,
   "hfov": 6.9,
   "datetime": "2026:09:05 13:16:04",
   "camera": "COOLPIX P900",
   "w": 4608,
   "h": 3456,
   "title": "",
-  "text": ""
+  "text": "",
+  "edited": [
+   "heading"
+  ]
  }
 ]
