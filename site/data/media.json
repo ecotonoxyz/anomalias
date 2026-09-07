@@ -321,5 +321,39 @@
   "h": 768,
   "title": "Vista do Jaguaré",
   "text": ""
+ },
+ {
+  "id": "poligono-20260905-1126",
+  "src": "up-44428455b3e6395a",
+  "file": "poligono-20260905-1126.jpeg",
+  "anom": "poligono",
+  "lat": -23.605331,
+  "lon": -46.398664,
+  "alt": 862.3,
+  "heading": 88.1,
+  "hfov": 26.3,
+  "datetime": "2026:09:05 11:26:31",
+  "camera": "iPhone 13 Pro",
+  "w": 6262,
+  "h": 2950,
+  "title": "passo dos metalúrgicos",
+  "text": ""
+ },
+ {
+  "id": "poligono-20260905-1252",
+  "src": "up-115e1c4345a3748d",
+  "file": "poligono-20260905-1252.jpeg",
+  "anom": "poligono",
+  "lat": -23.557911,
+  "lon": -46.410119,
+  "alt": 782.9,
+  "heading": null,
+  "hfov": 5.9,
+  "datetime": "2026:09:05 12:52:29",
+  "camera": "COOLPIX P900",
+  "w": 4508,
+  "h": 3380,
+  "title": "",
+  "text": ""
  }
 ]
