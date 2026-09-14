@@ -17,3 +17,6 @@ maps/*.preview.jpg
 # photos uploaded through the page — the bucket (gs://ecotono-data/raw/anomalias) is
 # their archive; this is a public repo and they carry full GPS EXIF
 images/raw/up-*
+
+# personal Claude Code settings (deploy permission)
+.claude/settings.local.json
